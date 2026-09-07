@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load scholarship_extras %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-pill {
+        font-size: .85rem; font-weight: 700; padding: .45em 1.1em; border-radius: 2rem;
+    }
+    .badge-pending      { background:#fff3cd; color:#856404; border:1px solid #ffc107; }
+    .badge-under-review { background:#cff4fc; color:#055160; border:1px solid #0dcaf0; }
+    .badge-approved     { background:#d1e7dd; color:#0a3622; border:1px solid #198754; }
+    .badge-rejected     { background:#f8d7da; color:#58151c; border:1px solid #dc3545; }
+    .doc-item { border:1px solid #e9ecef; border-radius:.6rem; padding:.75rem 1rem; }
+    .section-header {
+        font-size:.72rem; text-transform:uppercase; letter-spacing:.08em;
+        color:#6c757d; font-weight:700; margin-bottom:.75rem;
+    }
+    .review-panel { border-left:4px solid #1a3d5c; }
+    .award-panel  { border-left:4px solid #198754; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'scholarships:application_list' %}">Applications</a></li>
+        <li class="breadcrumb-item active">{{ application.applicant.get_full_name|default:application.applicant.username }}</li>
+    </ol>
+</nav>
+
+
+<!-- ── Page Header ── -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <!-- Avatar -->
+        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4"
+             style="width:58px;height:58px;background:#1a3d5c;flex-shrink:0;">
+            {{ application.applicant.get_full_name|default:application.applicant.username|first|upper }}
+        </div>
+        <div>
+            <h3 class="mb-0 fw-bold">
+                {{ application.applicant.get_full_name|default:application.applicant.username }}
+            </h3>
+            <small class="text-muted">
+                <i class="bi bi-envelope me-1"></i>{{ application.applicant.email }}
+                &nbsp;|&nbsp;
+                <i class="bi bi-calendar3 me-1"></i>Applied {{ application.application_date|date:"d M Y" }}
+            </small>
+        </div>
+    </div>
+
+    <!-- Current Status Badge -->
+    <span class="status-pill badge-{{ application.status }}">
+        {% if application.status == 'pending'      %}<i class="bi bi-hourglass-split me-1"></i>
+        {% elif application.status == 'under_review'%}<i class="bi bi-eye-fill me-1"></i>
+        {% elif application.status == 'approved'   %}<i class="bi bi-check-circle-fill me-1"></i>
+        {% elif application.status == 'rejected'   %}<i class="bi bi-x-circle-fill me-1"></i>
+        {% endif %}
+        {{ application.get_status_display }}
+    </span>
+</div>
+
+<div class="row g-4">
+    <!-- ══ LEFT COLUMN: Application Details + Documents ══ -->
+    <div class="col-lg-7">
+
+        <!-- Application Details -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-file-earmark-person me-2 text-primary"></i>Application Details
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="section-header">Academic Session</div>
+                        <strong>{{ application.academic_session }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <div class="section-header">CGPA</div>
+                        <strong>{{ application.current_cgpa }}</strong>
+                    </div>
+                    <div class="col-12">
+                        <div class="section-header">Institution</div>
+                        <strong>{{ application.institution }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <div class="section-header">Course of Study</div>
+                        <strong>{{ application.course_of_study }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <div class="section-header">Level</div>
+                        <strong>{{ application.level }}</strong>
+                    </div>
+                </div>
+
+                {% if application.statement_of_purpose %}
+                <hr class="my-3"/>
+                <div class="section-header">Statement of Purpose</div>
+                <p class="small mb-0" style="line-height:1.75;white-space:pre-wrap;">{{ application.statement_of_purpose }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-paperclip me-2 text-success"></i>
+                Uploaded Documents
+                <span class="badge rounded-pill ms-1" style="background:#1a3d5c;">{{ documents|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if documents %}
+                <div class="d-flex flex-column gap-2">
+                    {% for doc in documents %}
+                    <div class="doc-item d-flex align-items-center gap-3" id="doc-{{ doc.pk }}">
+                        {% if doc.is_image %}
+                            <i class="bi bi-file-image-fill text-info fs-4"></i>
+                        {% else %}
+                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold">{{ doc.get_document_type_display }}</div>
+                            <div class="text-muted" style="font-size:.73rem;">
+                                {{ doc.filename }} &mdash; {{ doc.uploaded_at|date:"d M Y, H:i" }}
+                            </div>
+                        </div>
+                        <a href="{{ doc.file.url }}" target="_blank"
+                           class="btn btn-sm btn-outline-primary"
+                           id="btn-view-doc-{{ doc.pk }}">
+                            <i class="bi bi-eye me-1"></i>
+                            {% if doc.is_image %}View{% else %}Download{% endif %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-folder-x fs-2 d-block mb-2 text-secondary"></i>
+                    No documents uploaded yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ RIGHT COLUMN: Review Panel + Award Panel ══ -->
+    <div class="col-lg-5">
+
+        <!-- Review Panel -->
+        <div class="card shadow-sm mb-4 review-panel">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-clipboard2-check me-2" style="color:#1a3d5c;"></i>
+                Review Decision
+                {% if request.user.role == 'reviewer' %}
+                <span class="badge bg-secondary ms-2 small">Reviewer — limited actions</span>
+                {% elif request.user.role == 'member' %}
+                <span class="badge bg-secondary ms-2 small">Member — read-only</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+
+                {% if request.user.role == 'admin' or request.user.is_superuser %}
+                {# ── Admins: full review form ──────────────────────────────── #}
+                <form method="post"
+                      action="{% url 'scholarships:application_review' application.pk %}"
+                      id="review-form">
+                    {% csrf_token %}
+
+                    <!-- Status selector -->
+                    <div class="mb-3">
+                        <label for="{{ review_form.status.id_for_label }}" class="form-label fw-medium">
+                            Status <span class="text-danger">*</span>
+                        </label>
+                        {{ review_form.status }}
+                        {% if review_form.status.errors %}
+                        <div class="text-danger small mt-1">{{ review_form.status.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Reviewer Notes -->
+                    <div class="mb-3">
+                        <label for="{{ review_form.reviewer_notes.id_for_label }}" class="form-label fw-medium">
+                            Reviewer Notes
+                            <small class="fw-normal text-muted">(internal)</small>
+                        </label>
+                        {{ review_form.reviewer_notes }}
+                        {% if review_form.reviewer_notes.errors %}
+                        <div class="text-danger small mt-1">{{ review_form.reviewer_notes.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn w-100 fw-semibold text-white py-2"
+                            style="background:#1a3d5c; border-radius:.6rem;"
+                            id="btn-submit-review">
+                        <i class="bi bi-save me-2"></i>Save Review Decision
+                    </button>
+                </form>
+
+                {% elif request.user.role == 'reviewer' %}
+                {# ── Reviewers: form limited to under_review ───────────────── #}
+                <form method="post"
+                      action="{% url 'scholarships:application_review' application.pk %}"
+                      id="review-form">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ review_form.status.id_for_label }}" class="form-label fw-medium">
+                            Status <span class="text-danger">*</span>
+                        </label>
+                        {{ review_form.status }}
+                        <div class="form-text text-warning">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            Reviewers can set to "Under Review" only. Final decisions need Admin.
+                        </div>
+                        {% if review_form.status.errors %}
+                        <div class="text-danger small mt-1">{{ review_form.status.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ review_form.reviewer_notes.id_for_label }}" class="form-label fw-medium">
+                            Reviewer Notes
+                            <small class="fw-normal text-muted">(internal)</small>
+                        </label>
+                        {{ review_form.reviewer_notes }}
+                        {% if review_form.reviewer_notes.errors %}
+                        <div class="text-danger small mt-1">{{ review_form.reviewer_notes.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn w-100 fw-semibold text-white py-2"
+                            style="background:#1a3d5c; border-radius:.6rem;"
+                            id="btn-submit-review">
+                        <i class="bi bi-save me-2"></i>Save Review Note
+                    </button>
+                </form>
+
+                {% else %}
+                {# ── Members: read-only notice ─────────────────────────────── #}
+                <div class="alert alert-secondary mt-2 mb-0 d-flex align-items-start gap-2" role="alert">
+                    <i class="bi bi-lock-fill fs-5 mt-1 text-secondary flex-shrink-0"></i>
+                    <div>
+                        <strong>Read-only access.</strong><br>
+                        <small>As a Member you can view this application in full, but only Administrators can approve, reject, or change the review status.</small>
+                    </div>
+                </div>
+                {% if application.reviewer_notes %}
+                <hr/>
+                <div class="section-header">Last Reviewer Note</div>
+                <p class="small text-muted mb-0">{{ application.reviewer_notes }}</p>
+                {% endif %}
+                {% endif %}
+
+                {% if request.user.role != 'member' and application.reviewer_notes %}
+                <hr/>
+                <div class="section-header">Last Reviewer Note</div>
+                <p class="small text-muted mb-0">{{ application.reviewer_notes }}</p>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- Award Panel (Admin only) -->
+        {% if request.user.role == 'admin' or request.user.is_superuser %}
+        <div class="card shadow-sm award-panel">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-award-fill me-2 text-success"></i>
+                {% if recipient %}Update Award{% else %}Record Award{% endif %}
+            </div>
+            <div class="card-body">
+                {% if recipient %}
+                <div class="alert alert-success py-2 mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <strong>₦{{ recipient.amount_awarded|floatformat:2|intcomma }}</strong> awarded on
+                        {{ recipient.awarded_date|date:"d M Y" }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="post"
+                      action="{% url 'scholarships:award_scholarship' application.pk %}"
+                      id="award-form">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ award_form.awarded_date.id_for_label }}" class="form-label fw-medium">
+                            Award Date <span class="text-danger">*</span>
+                        </label>
+                        {{ award_form.awarded_date }}
+                        {% if award_form.awarded_date.errors %}
+                        <div class="text-danger small mt-1">{{ award_form.awarded_date.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ award_form.amount_awarded.id_for_label }}" class="form-label fw-medium">
+                            Amount (₦) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-bold">₦</span>
+                            {{ award_form.amount_awarded }}
+                        </div>
+                        {% if award_form.amount_awarded.errors %}
+                        <div class="text-danger small mt-1">{{ award_form.amount_awarded.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ award_form.notes.label_tag }}
+                        {{ award_form.notes }}
+                    </div>
+
+                    <div class="alert alert-warning py-2 small">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Saving this form will automatically set the application status to
+                        <strong>Approved</strong>.
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 fw-semibold"
+                            id="btn-award-submit">
+                        <i class="bi bi-award me-2"></i>
+                        {% if recipient %}Update Award{% else %}Grant Scholarship{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

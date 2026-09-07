@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ donor.full_name }} — Donor Profile{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'donors:donor_list' %}">Donors</a></li>
+        <li class="breadcrumb-item active">{{ donor.full_name }}</li>
+    </ol>
+</nav>
+
+<!-- Profile Header Card -->
+<div class="card shadow-sm mb-4" style="border-left: 5px solid var(--kb-accent);">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+
+            <!-- Avatar + Info -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-3"
+                     style="width:72px;height:72px;background-color:var(--kb-primary);flex-shrink:0;">
+                    {{ donor.full_name|first|upper }}
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-bold">{{ donor.full_name }}</h3>
+                    <a href="mailto:{{ donor.email }}" class="text-muted text-decoration-none">
+                        <i class="bi bi-envelope me-1"></i>{{ donor.email }}
+                    </a>
+                    {% if donor.phone %}
+                    <span class="text-muted ms-3">
+                        <i class="bi bi-telephone me-1"></i>{{ donor.phone }}
+                    </span>
+                    {% endif %}
+                    {% if donor.address %}
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-geo-alt me-1"></i>{{ donor.address }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'donors:donor_update' donor.pk %}"
+                   class="btn btn-outline-secondary"
+                   id="btn-edit-donor-{{ donor.pk }}">
+                    <i class="bi bi-pencil me-2"></i>Edit
+                </a>
+                {% if request.user.role == 'admin' %}
+                <a href="{% url 'donors:donor_delete' donor.pk %}"
+                   class="btn btn-outline-danger"
+                   id="btn-delete-donor-{{ donor.pk }}">
+                    <i class="bi bi-trash me-2"></i>Delete
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-success"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.5rem;">₦{{ total_donated|floatformat:2|intcomma }}</div>
+                <div class="kpi-label">Total Donated</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-primary"><i class="bi bi-receipt-cutoff"></i></div>
+            <div>
+                <div class="kpi-value">{{ donation_count }}</div>
+                <div class="kpi-label">Donations Made</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-warning"><i class="bi bi-calendar-event"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.1rem;">{{ donor.created_at|date:"d M Y" }}</div>
+                <div class="kpi-label">Member Since</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-info"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.1rem;">
+                    {{ donor.updated_at|date:"d M Y" }}
+                </div>
+                <div class="kpi-label">Last Updated</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if donor.notes %}
+<div class="alert alert-light border-start border-4 border-warning mb-4" role="alert">
+    <strong><i class="bi bi-sticky-fill me-2 text-warning"></i>Internal Notes:</strong><br/>
+    {{ donor.notes }}
+</div>
+{% endif %}
+
+<!-- Donation History -->
+<div class="card shadow-sm">
+    <div class="card-header fw-semibold"
+         style="background-color:#f8f9fa;">
+        <span><i class="bi bi-clock-history me-2 text-success"></i>Donation History</span>
+    </div>
+
+    <!-- Filter Row -->
+    <div class="card-body border-bottom py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4 col-12">
+                {{ filter.form.date_from.label_tag }}
+                {{ filter.form.date_from }}
+            </div>
+            <div class="col-md-4 col-12">
+                {{ filter.form.date_to.label_tag }}
+                {{ filter.form.date_to }}
+            </div>
+            <div class="col-md-2 col-6">
+                <button type="submit" class="btn btn-kb-primary w-100" id="btn-filter-donations">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+            </div>
+            <div class="col-md-2 col-6">
+                <a href="{% url 'donors:donor_detail' donor.pk %}"
+                   class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        {% if donations %}
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover align-middle mb-0" id="donations-history-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th class="text-end">Amount (₦)</th>
+                        <th>Payment Method</th>
+                        <th>Reference No.</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        {% if request.user.role == 'admin' or request.user.role == 'member' %}
+                        <th class="text-center">Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donation in donations %}
+                    <tr>
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+                        <td>{{ donation.date|date:"d M Y" }}</td>
+                        <td class="text-end fw-semibold text-success">
+                            ₦{{ donation.amount|floatformat:2|intcomma }}
+                        </td>
+                        <td>
+                            <span class="badge text-bg-light text-dark border">
+                                {{ donation.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td class="small font-monospace text-muted">
+                            {{ donation.reference_number|default:'—' }}
+                        </td>
+                        <td>
+                            {% if donation.status == 'pending' %}
+                            <span class="badge rounded-pill bg-warning text-dark">Pending</span>
+                            {% elif donation.status == 'confirmed' %}
+                            <span class="badge rounded-pill bg-success">Confirmed</span>
+                            {% elif donation.status == 'rejected' %}
+                            <span class="badge rounded-pill bg-danger">Rejected</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-secondary">{{ donation.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ donation.notes|truncatechars:40|default:'—' }}</td>
+                        {% if request.user.role == 'admin' or request.user.role == 'member' %}
+                        <td class="text-center">
+                            {% if donation.status == 'pending' and request.user.role == 'admin' %}
+                            <a href="{% url 'donors:review_donation' donation.pk %}"
+                               class="btn btn-sm btn-warning fw-semibold py-1 px-2"
+                               id="btn-review-donation-{{ donation.pk }}">
+                                <i class="bi bi-shield-check me-1"></i>Review
+                            </a>
+                            {% elif donation.status == 'pending' %}
+                            <span class="badge rounded-pill bg-light text-muted border">Pending Review</span>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-light fw-bold">
+                        <td colspan="2" class="text-end">Filtered Total:</td>
+                        <td class="text-end text-success">
+                            ₦{% with total=donations|length %}{{ filter.qs.aggregate_total }}{% endwith %}
+                            {{ filter.qs|length }} donation(s) shown
+                        </td>
+                        <td colspan="{% if request.user.role == 'admin' or request.user.role == 'member' %}5{% else %}4{% endif %}"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+            <p class="mb-0">No donations found for this period.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if donations %}
+    <div class="card-footer small text-muted d-flex justify-content-between">
+        <span>{{ filter.qs.count }} donation(s) shown</span>
+        <span class="fw-semibold text-success">
+            Total Donated (All Time): ₦{{ total_donated|floatformat:2|intcomma }}
+        </span>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

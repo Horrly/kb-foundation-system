@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Document{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-zone {
+        border: 2px dashed #ced4da;
+        border-radius: .75rem;
+        padding: 2rem;
+        text-align: center;
+        background: #fafbfc;
+        transition: border-color .2s, background .2s;
+        cursor: pointer;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+        border-color: #1a3d5c;
+        background: #eef3f8;
+    }
+    .upload-zone .zone-icon  { font-size: 2.5rem; color: #adb5bd; margin-bottom: .5rem; }
+    .upload-zone .zone-label { font-weight: 600; color: #495057; }
+    .upload-zone .zone-hint  { font-size: .8rem; color: #6c757d; margin-top: .25rem; }
+
+    .doc-existing-card {
+        border: 1px solid #e9ecef; border-radius: .65rem;
+        padding: .75rem 1rem; background: #fff;
+        display: flex; align-items: center; gap: .75rem;
+    }
+    .doc-existing-card .type-pill {
+        font-size: .72rem; font-weight: 600;
+        background: #e8f0f7; color: #1a3d5c;
+        padding: .25em .65em; border-radius: 2rem;
+    }
+    #selected-file-info {
+        display: none;
+        align-items: center; gap: .75rem;
+        background: #eef3f8; border-radius: .5rem;
+        padding: .75rem 1rem; margin-top: 1rem;
+        font-size: .875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'scholarships:application_status' %}">My Application</a>
+        </li>
+        <li class="breadcrumb-item active">Upload Document</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+        <!-- Application Status Badge -->
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="text-muted small">Application Status:</span>
+            <span class="badge px-3 py-2
+                {% if application.status == 'pending' %}bg-warning text-dark
+                {% elif application.status == 'under_review' %}bg-info text-dark
+                {% elif application.status == 'approved' %}bg-success
+                {% else %}bg-danger{% endif %}">
+                {{ application.get_status_display }}
+            </span>
+        </div>
+
+        <div class="card shadow-sm">
+            <!-- Card Header -->
+            <div class="card-header py-3" style="background:#198754;">
+                <h4 class="mb-0 text-white d-flex align-items-center gap-2">
+                    <i class="bi bi-cloud-upload-fill"></i>Upload Supporting Document
+                </h4>
+                <small class="text-white-50">
+                    Each upload adds one document. Submit this form multiple times to upload all required files.
+                </small>
+            </div>
+
+            <div class="card-body p-4">
+
+
+                <!-- Guidance note -->
+                <div class="alert alert-light border-start border-4 border-success py-2 mb-4">
+                    <small>
+                        <i class="bi bi-shield-check text-success me-1"></i>
+                        <strong>File requirements:</strong>
+                        Only <code>PDF</code>, <code>JPG</code>, and <code>PNG</code> files are accepted.
+                        Maximum size: <strong>5 MB</strong> per file.
+                    </small>
+                </div>
+
+                <!--
+                    ╔══════════════════════════════════════════╗
+                    ║  CRITICAL: enctype="multipart/form-data" ║
+                    ║  is REQUIRED for file uploads to work.   ║
+                    ╚══════════════════════════════════════════╝
+                -->
+                <form method="post"
+                      enctype="multipart/form-data"
+                      novalidate
+                      id="document-upload-form">
+                    {% csrf_token %}
+
+                    <!-- Document Type -->
+                    <div class="mb-4">
+                        <label for="{{ form.document_type.id_for_label }}" class="form-label fw-medium">
+                            Document Type <span class="text-danger">*</span>
+                        </label>
+                        {{ form.document_type }}
+                        <div class="form-text">
+                            Select the category that best describes the file you are uploading.
+                        </div>
+                        {% if form.document_type.errors %}
+                        <div class="text-danger small mt-1">{{ form.document_type.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- File Upload Zone -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">
+                            Select File <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="upload-zone" id="upload-zone"
+                             onclick="document.getElementById('id_doc_file').click()">
+                            <div class="zone-icon">
+                                <i class="bi bi-cloud-arrow-up-fill"></i>
+                            </div>
+                            <div class="zone-label">Click to browse or drag & drop</div>
+                            <div class="zone-hint">PDF, JPG, PNG — max 5 MB</div>
+                            <!-- Hidden native input -->
+                            <div style="display:none;">{{ form.file }}</div>
+                        </div>
+
+                        <!-- Selected file preview -->
+                        <div id="selected-file-info">
+                            <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
+                            <div>
+                                <div id="selected-file-name" class="fw-medium"></div>
+                                <div id="selected-file-size" class="text-muted small"></div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-auto"
+                                    id="btn-clear-file">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+
+                        {% if form.file.errors %}
+                        <div class="text-danger small mt-2">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            {{ form.file.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                        <a href="{% url 'scholarships:application_status' %}"
+                           class="btn btn-outline-secondary"
+                           id="btn-doc-cancel">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Status
+                        </a>
+                        <button type="submit" class="btn btn-success px-4"
+                                id="btn-doc-submit">
+                            <i class="bi bi-upload me-2"></i>{{ form_action }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Already Uploaded Documents -->
+        {% if existing_docs %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-paperclip me-2 text-success"></i>
+                Already Uploaded ({{ existing_docs|length }})
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column gap-2">
+                    {% for doc in existing_docs %}
+                    <div class="doc-existing-card" id="doc-card-{{ doc.pk }}">
+                        {% if doc.is_image %}
+                            <i class="bi bi-file-image-fill text-info fs-5"></i>
+                        {% else %}
+                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <span class="type-pill">{{ doc.get_document_type_display }}</span>
+                            <div class="small fw-medium mt-1 text-truncate" title="{{ doc.filename }}">
+                                {{ doc.filename }}
+                            </div>
+                            <div class="text-muted" style="font-size:.7rem;">
+                                {{ doc.uploaded_at|date:"d M Y, H:i" }}
+                            </div>
+                        </div>
+                        <a href="{{ doc.file.url }}" target="_blank"
+                           class="btn btn-link btn-sm p-0 text-primary"
+                           id="btn-view-existing-{{ doc.pk }}">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const fileInput     = document.getElementById('id_doc_file');
+    const uploadZone    = document.getElementById('upload-zone');
+    const fileInfo      = document.getElementById('selected-file-info');
+    const fileName      = document.getElementById('selected-file-name');
+    const fileSize      = document.getElementById('selected-file-size');
+    const clearBtn      = document.getElementById('btn-clear-file');
+    const ALLOWED_EXT   = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const MAX_BYTES     = 5 * 1024 * 1024;
+
+    function formatBytes(bytes) {
+        return bytes < 1024 * 1024
+            ? (bytes / 1024).toFixed(1) + ' KB'
+            : (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function validateAndShow(file) {
+        if (!file) return;
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+
+        if (!ALLOWED_EXT.includes(ext)) {
+            alert(`File type "${ext}" is not allowed.\nPlease upload a PDF, JPG, or PNG.`);
+            fileInput.value = '';
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            alert(`File is too large (${formatBytes(file.size)}).\nMaximum allowed is 5 MB.`);
+            fileInput.value = '';
+            return;
+        }
+        // Show preview
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+        fileInfo.style.display = 'flex';
+        uploadZone.style.borderColor = '#198754';
+    }
+
+    fileInput.addEventListener('change', () => validateAndShow(fileInput.files[0]));
+
+    clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.value    = '';
+        fileInfo.style.display = 'none';
+        uploadZone.style.borderColor = '';
+    });
+
+    // Drag & drop
+    ['dragenter', 'dragover'].forEach(ev =>
+        uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('drag-over'); })
+    );
+    ['dragleave', 'drop'].forEach(ev =>
+        uploadZone.addEventListener(ev, e => { uploadZone.classList.remove('drag-over'); })
+    );
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            // Transfer to the input
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            validateAndShow(file);
+        }
+    });
+
+    // Disable submit on click
+    document.getElementById('document-upload-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-doc-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading…';
+    });
+</script>
+{% endblock %}

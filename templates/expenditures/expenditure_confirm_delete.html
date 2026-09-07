@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Delete Expenditure{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card border-danger shadow-sm">
+
+            <!-- Danger Header -->
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Confirm Deletion
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-trash-fill fs-1 text-danger d-block mb-3"></i>
+                    <h5 class="fw-bold">Are you sure you want to delete this expenditure?</h5>
+                    <p class="text-muted">This action is permanent and cannot be reversed.</p>
+                </div>
+
+                <!-- Expenditure Summary -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <table class="table table-borderless mb-0 small">
+                            <tbody>
+                                <tr>
+                                    <th class="text-muted" style="width:35%">Title</th>
+                                    <td class="fw-semibold">{{ expenditure.title }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Category</th>
+                                    <td>{{ expenditure.get_category_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Amount</th>
+                                    <td class="fw-bold text-danger">₦{{ expenditure.amount|floatformat:2|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Date</th>
+                                    <td>{{ expenditure.date|date:"d M Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Receipt</th>
+                                    <td>
+                                        {% if expenditure.receipt %}
+                                            <span class="text-warning fw-semibold">
+                                                <i class="bi bi-file-earmark-fill me-1"></i>
+                                                {{ expenditure.receipt_filename }}
+                                                <small class="text-muted">(will also be deleted)</small>
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">No receipt attached</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if expenditure.recorded_by %}
+                                <tr>
+                                    <th class="text-muted">Recorded By</th>
+                                    <td>{{ expenditure.recorded_by }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Warning box -->
+                <div class="alert alert-warning d-flex align-items-start gap-2 mb-4">
+                    <i class="bi bi-exclamation-circle-fill mt-1 flex-shrink-0"></i>
+                    <div>
+                        <strong>Warning:</strong> Deleting this record will also permanently
+                        remove the attached receipt file from the server.
+                        This expenditure will be excluded from all future reports.
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'expenditures:expenditure_list' %}"
+                       class="btn btn-outline-secondary px-4"
+                       id="btn-cancel-exp-delete">
+                        <i class="bi bi-arrow-left me-1"></i>Cancel
+                    </a>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="btn btn-danger px-4"
+                                id="btn-confirm-exp-delete">
+                            <i class="bi bi-trash-fill me-2"></i>Delete Permanently
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

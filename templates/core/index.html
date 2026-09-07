@@ -1,0 +1,507 @@
+{% extends 'base.html' %}
+
+{% block title %}KB Foundation — Empowering Education{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ════════════════════════════════════════════════════════
+   HERO SECTION
+════════════════════════════════════════════════════════ */
+.hero-section {
+    min-height: 100vh;
+    background:
+        linear-gradient(135deg, rgba(10, 21, 32, .92) 0%, rgba(26, 61, 92, .85) 55%, rgba(232, 160, 32, .25) 100%),
+        url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1600&q=80') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 5rem 0;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(232,160,32,.18) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+/* Animated floating particles */
+.hero-particle {
+    position: absolute; border-radius: 50%;
+    background: rgba(232, 160, 32, .15);
+    animation: float-particle 8s ease-in-out infinite;
+}
+.hero-particle:nth-child(1) { width:120px;height:120px; top:10%;left:5%; animation-delay:0s; }
+.hero-particle:nth-child(2) { width:70px; height:70px;  top:70%;left:80%;animation-delay:2s; }
+.hero-particle:nth-child(3) { width:50px; height:50px;  top:30%;left:90%;animation-delay:4s; }
+
+@keyframes float-particle {
+    0%,100% { transform: translateY(0) scale(1);    opacity:.5; }
+    50%      { transform: translateY(-30px) scale(1.1); opacity:.9; }
+}
+
+.hero-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(232,160,32,.2); border: 1px solid rgba(232,160,32,.5);
+    border-radius: 2rem; padding: .4rem 1.1rem;
+    font-size: .8rem; font-weight: 600; color: #f5c85a;
+    letter-spacing: .05em; text-transform: uppercase;
+    backdrop-filter: blur(6px);
+    animation: fade-in-down .6s ease both;
+}
+
+.hero-title {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 800; line-height: 1.12;
+    color: #fff;
+    animation: fade-in-up .7s ease .1s both;
+}
+.hero-title span { color: #f5c85a; }
+
+.hero-subtitle {
+    font-size: 1.1rem; color: rgba(255,255,255,.82);
+    max-width: 560px; line-height: 1.75;
+    animation: fade-in-up .7s ease .2s both;
+}
+
+.hero-cta-group { animation: fade-in-up .7s ease .3s both; }
+
+.btn-hero-primary {
+    background: linear-gradient(135deg, #e8a020 0%, #f5c85a 100%);
+    color: #1a2a0a; font-weight: 700; font-size: 1rem;
+    border: none; border-radius: .75rem; padding: .85rem 2.2rem;
+    box-shadow: 0 8px 24px rgba(232,160,32,.45);
+    transition: all .25s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: .5rem;
+}
+.btn-hero-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(232,160,32,.6);
+    color: #111;
+}
+
+.btn-hero-whatsapp {
+    background: rgba(255,255,255,.1);
+    border: 1.5px solid rgba(255,255,255,.35);
+    color: #fff; font-weight: 600; font-size: 1rem;
+    border-radius: .75rem; padding: .85rem 2rem;
+    backdrop-filter: blur(8px);
+    transition: all .25s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: .5rem;
+}
+.btn-hero-whatsapp:hover {
+    background: rgba(37,211,102,.25);
+    border-color: #25D366;
+    color: #fff;
+    transform: translateY(-3px);
+}
+
+.hero-login-link {
+    color: rgba(255,255,255,.65); font-size: .875rem;
+    text-decoration: none; transition: color .2s;
+}
+.hero-login-link:hover { color: #f5c85a; }
+
+/* Hero stat pills */
+.hero-stats { animation: fade-in-up .7s ease .4s both; }
+.stat-pill {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.18);
+    backdrop-filter: blur(8px);
+    border-radius: .75rem; padding: .75rem 1.25rem; text-align: center;
+}
+.stat-pill .snum { font-size: 1.8rem; font-weight: 800; color: #f5c85a; line-height:1; }
+.stat-pill .slabel { font-size: .72rem; color: rgba(255,255,255,.7); text-transform: uppercase;
+    letter-spacing: .08em; margin-top: .2rem; }
+
+/* ════════════════════════════════════════════════════════
+   ANIMATIONS
+════════════════════════════════════════════════════════ */
+@keyframes fade-in-up  { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:none; } }
+@keyframes fade-in-down{ from { opacity:0; transform:translateY(-16px);} to { opacity:1; transform:none; } }
+
+/* ════════════════════════════════════════════════════════
+   HOW IT WORKS
+════════════════════════════════════════════════════════ */
+.steps-section { background: #f4f7fb; }
+.step-card {
+    background: #fff; border-radius: 1rem;
+    padding: 2rem 1.5rem; text-align: center;
+    box-shadow: 0 2px 16px rgba(0,0,0,.07);
+    transition: transform .25s, box-shadow .25s;
+    height: 100%;
+}
+.step-card:hover { transform: translateY(-6px); box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.step-num {
+    width: 3rem; height: 3rem; border-radius: 50%;
+    background: linear-gradient(135deg, #1a3d5c 0%, #2a5f8a 100%);
+    color: #fff; font-size: 1.1rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem;
+}
+.step-icon { font-size: 2rem; margin-bottom: .75rem; }
+
+/* ════════════════════════════════════════════════════════
+   TESTIMONIALS
+════════════════════════════════════════════════════════ */
+.testimonials-section { background: #fff; }
+.testimonial-card {
+    border-radius: 1.25rem;
+    border: none; box-shadow: 0 4px 24px rgba(0,0,0,.09);
+    padding: 2rem 1.75rem;
+    transition: transform .3s, box-shadow .3s;
+    height: 100%; display: flex; flex-direction: column;
+}
+.testimonial-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(0,0,0,.14); }
+.testimonial-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 800; color: #fff;
+    flex-shrink: 0;
+}
+.testimonial-quote { color: #4a5568; line-height: 1.75; flex: 1; font-size: .95rem; }
+.quote-mark { font-size: 3rem; line-height: .8; color: #e8a020; font-weight: 900;
+    font-family: Georgia, serif; }
+
+/* ════════════════════════════════════════════════════════
+   IMPACT SECTION (dark)
+════════════════════════════════════════════════════════ */
+.impact-section {
+    background: linear-gradient(135deg, #0d2538 0%, #1a3d5c 100%);
+    color: #fff;
+}
+.impact-num { font-size: 3rem; font-weight: 800; color: #f5c85a; }
+.impact-label { font-size: .85rem; color: rgba(255,255,255,.72);
+    text-transform: uppercase; letter-spacing: .08em; }
+
+/* ════════════════════════════════════════════════════════
+   FINAL CTA BANNER
+════════════════════════════════════════════════════════ */
+.cta-banner {
+    background: linear-gradient(135deg, #e8a020 0%, #c4780a 100%);
+    border-radius: 1.5rem; padding: 3.5rem 2rem;
+    box-shadow: 0 16px 48px rgba(232,160,32,.35);
+}
+.cta-banner h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: #fff; }
+.cta-banner p { color: rgba(255,255,255,.88); font-size: 1.05rem; }
+
+/* Override base.html card hover for homepage sections */
+.testimonials-section .card:hover,
+.steps-section .card:hover { transform: none; }
+.testimonial-card:hover { transform: translateY(-6px); }
+.step-card:hover         { transform: translateY(-6px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ─────────────────────────────────────────────────────────────────────────
+     HERO SECTION
+───────────────────────────────────────────────────────────────────────── -->
+<section class="hero-section" id="hero" aria-label="Hero">
+    <!-- Decorative particles -->
+    <div class="hero-particle"></div>
+    <div class="hero-particle"></div>
+    <div class="hero-particle"></div>
+
+    <div class="container-xl">
+        <div class="row align-items-center g-5">
+
+            <!-- Left: Copy + CTAs -->
+            <div class="col-lg-7 col-xl-6">
+
+                <div class="hero-badge mb-4">
+                    <i class="bi bi-award-fill"></i>
+                    Empowering Nigerian Students Since 2012
+                </div>
+
+                <h1 class="hero-title mb-4">
+                    Investing in <span>Brilliant Minds</span>,<br>
+                    Building Nigeria's Future.
+                </h1>
+
+                <p class="hero-subtitle mb-5">
+                    The KB Foundation provides life-changing scholarships to academically
+                    excellent students from financially challenged backgrounds across
+                    Nigerian universities and polytechnics.
+                </p>
+
+                <!-- Primary CTAs -->
+                <div class="hero-cta-group d-flex flex-wrap gap-3 mb-4">
+                    <!-- Apply for Scholarship → Applicant registration page -->
+                    <a href="{% url 'accounts:register' %}"
+                       class="btn-hero-primary"
+                       id="btn-hero-apply">
+                        <i class="bi bi-mortarboard-fill"></i>
+                        Apply for Scholarship
+                    </a>
+
+                    <!-- Become a Donor/Member → WhatsApp appointment booking (external) -->
+                    <a href="https://wa.me/qr/BNP64OBX5NTZP1"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="btn-hero-whatsapp"
+                       id="btn-hero-donor">
+                        <i class="bi bi-whatsapp"></i>
+                        Become a Donor / Member
+                    </a>
+                </div>
+
+                <!-- Secondary link: staff/donor portal login -->
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-lock-fill" style="color:rgba(255,255,255,.4);font-size:.8rem;"></i>
+                    <a href="{% url 'accounts:portal_login' %}" class="hero-login-link" id="btn-hero-login">
+                        Donor / Member Login &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Stat pills -->
+            <div class="col-lg-5 col-xl-4 offset-xl-2">
+                <div class="hero-stats">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="stat-pill">
+                                <div class="snum">500+</div>
+                                <div class="slabel">Scholars Funded</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-pill">
+                                <div class="snum">14+</div>
+                                <div class="slabel">Years of Impact</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-pill">
+                                <div class="snum">₦50M</div>
+                                <div class="slabel">Grants Disbursed</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-pill">
+                                <div class="snum">35+</div>
+                                <div class="slabel">Institutions</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trust signals -->
+                    <div class="mt-4 d-flex align-items-center gap-3 flex-wrap">
+                        <span style="color:rgba(255,255,255,.45);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;">
+                            Trusted by
+                        </span>
+                        <span class="badge px-3 py-2" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);font-weight:500;font-size:.78rem;">
+                            <i class="bi bi-shield-check-fill me-1 text-success"></i>CAC Registered
+                        </span>
+                        <span class="badge px-3 py-2" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);font-weight:500;font-size:.78rem;">
+                            <i class="bi bi-people-fill me-1" style="color:#f5c85a;"></i>Community-Driven
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────────
+     HOW IT WORKS
+───────────────────────────────────────────────────────────────────────── -->
+<section class="steps-section py-6" id="how-it-works" style="padding:5rem 0;">
+    <div class="container-xl">
+
+        <div class="text-center mb-5">
+            <span class="badge px-3 py-2 mb-3 fw-semibold"
+                  style="background:#e8f0f7;color:#1a3d5c;font-size:.78rem;letter-spacing:.05em;">
+                THE PROCESS
+            </span>
+            <h2 class="fw-800 mb-2" style="font-weight:800;font-size:2rem;color:#1a3d5c;">
+                How the Scholarship Works
+            </h2>
+            <p class="text-muted" style="max-width:480px;margin:0 auto;">
+                A transparent, merit-based process — from application to award in four straightforward steps.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            {% for step in steps %}
+            <!-- steps populated below via hardcode for clarity -->
+            {% endfor %}
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <div class="step-icon"><i class="bi bi-pencil-fill text-primary"></i></div>
+                    <h5 class="fw-bold mb-2">Create Account</h5>
+                    <p class="text-muted small mb-0">
+                        Register as an applicant and complete your profile with your academic details.
+                    </p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <div class="step-icon"><i class="bi bi-file-earmark-text-fill" style="color:#e8a020;"></i></div>
+                    <h5 class="fw-bold mb-2">Submit Application</h5>
+                    <p class="text-muted small mb-0">
+                        Fill in the application form with your CGPA, institution, and a personal statement.
+                    </p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <div class="step-icon"><i class="bi bi-cloud-upload-fill text-success"></i></div>
+                    <h5 class="fw-bold mb-2">Upload Documents</h5>
+                    <p class="text-muted small mb-0">
+                        Upload your admission letter, school ID, and most recent result/transcript.
+                    </p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <div class="step-icon"><i class="bi bi-award-fill text-warning"></i></div>
+                    <h5 class="fw-bold mb-2">Receive Award</h5>
+                    <p class="text-muted small mb-0">
+                        Our committee reviews all applications. Approved scholars receive their award notification.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────────
+     IMPACT NUMBERS (dark strip)
+───────────────────────────────────────────────────────────────────────── -->
+<section class="impact-section py-5" id="impact">
+    <div class="container-xl">
+        <div class="row g-4 text-center">
+            <div class="col-6 col-md-3">
+                <div class="impact-num">500+</div>
+                <div class="impact-label">Lives Changed</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="impact-num">₦50M+</div>
+                <div class="impact-label">Total Grants</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="impact-num">35+</div>
+                <div class="impact-label">Institutions</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="impact-num">97%</div>
+                <div class="impact-label">Graduation Rate</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────────
+     TESTIMONIALS
+───────────────────────────────────────────────────────────────────────── -->
+<section class="testimonials-section py-5" id="testimonials" style="padding:5rem 0 !important;">
+    <div class="container-xl">
+
+        <div class="text-center mb-5">
+            <span class="badge px-3 py-2 mb-3 fw-semibold"
+                  style="background:#fef9ec;color:#c4780a;font-size:.78rem;letter-spacing:.05em;border:1px solid #f5c85a;">
+                SUCCESS STORIES
+            </span>
+            <h2 style="font-weight:800;font-size:2rem;color:#1a3d5c;" class="mb-2">
+                Words From Our Scholars
+            </h2>
+            <p class="text-muted" style="max-width:480px;margin:0 auto;">
+                Real stories from real students whose futures were transformed by the KB Foundation scholarship.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            {% for t in testimonials %}
+            <div class="col-md-6 col-lg-3">
+                <div class="testimonial-card" id="testimonial-{{ forloop.counter }}">
+                    <!-- Quote mark -->
+                    <div class="quote-mark mb-2">&ldquo;</div>
+
+                    <!-- Quote text -->
+                    <p class="testimonial-quote mb-4">{{ t.quote }}</p>
+
+                    <!-- Author -->
+                    <div class="d-flex align-items-center gap-3 mt-auto">
+                        <div class="testimonial-avatar" style="background:{{ t.colour }};">
+                            {{ t.avatar }}
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size:.9rem;color:#1a3d5c;">{{ t.name }}</div>
+                            <div class="small text-muted">{{ t.course }}</div>
+                            <div class="small text-muted">{{ t.session }} Scholar</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────────
+     FINAL CTA BANNER
+───────────────────────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:#f4f7fb;">
+    <div class="container-xl">
+        <div class="cta-banner text-center">
+            <h2 class="mb-3">Ready to Take the Next Step?</h2>
+            <p class="mb-4">
+                Whether you are a student seeking support or a generous soul who wants to give back —
+                the KB Foundation has a place for you.
+            </p>
+            <div class="d-flex flex-wrap gap-3 justify-content-center">
+                <a href="{% url 'accounts:register' %}"
+                   class="btn btn-dark btn-lg px-5 rounded-pill fw-bold"
+                   id="btn-bottom-apply">
+                    <i class="bi bi-mortarboard-fill me-2"></i>Apply for Scholarship
+                </a>
+                <a href="https://wa.me/qr/BNP64OBX5NTZP1"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn btn-outline-dark btn-lg px-5 rounded-pill fw-bold"
+                   id="btn-bottom-donor">
+                    <i class="bi bi-whatsapp me-2 text-success"></i>Become a Donor / Member
+                </a>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'accounts:portal_login' %}" class="text-dark text-decoration-none small opacity-75" id="btn-bottom-login">
+                    <i class="bi bi-lock me-1"></i>Donor / Member Login →
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Smooth entrance animation for testimonial cards using IntersectionObserver
+    const cards = document.querySelectorAll('.testimonial-card, .step-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.style.opacity    = '1';
+                    entry.target.style.transform  = 'translateY(0)';
+                }, i * 80);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+
+    cards.forEach(card => {
+        card.style.opacity   = '0';
+        card.style.transform = 'translateY(32px)';
+        card.style.transition = 'opacity .5s ease, transform .5s ease';
+        observer.observe(card);
+    });
+</script>
+{% endblock %}

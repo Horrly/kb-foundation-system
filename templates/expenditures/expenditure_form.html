@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'expenditures:expenditure_list' %}">Expenditures</a>
+        </li>
+        <li class="breadcrumb-item active">{{ page_title }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm">
+
+            <!-- Card Header -->
+            <div class="card-header py-3" style="background:#dc3545;">
+                <h4 class="mb-0 text-white d-flex align-items-center gap-2">
+                    <i class="bi bi-cash-coin"></i>
+                    {{ page_title }}
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+
+
+                <!-- Existing receipt display (edit mode only) -->
+                {% if expenditure and expenditure.receipt %}
+                <div class="alert alert-info d-flex align-items-center gap-3 py-2 mb-4">
+                    <i class="bi bi-paperclip fs-5"></i>
+                    <div>
+                        <strong>Current Receipt:</strong>
+                        <a href="{{ expenditure.receipt.url }}" target="_blank" class="ms-2">
+                            {% if expenditure.receipt_is_image %}
+                                <i class="bi bi-image me-1"></i>
+                            {% else %}
+                                <i class="bi bi-file-earmark-pdf me-1"></i>
+                            {% endif %}
+                            {{ expenditure.receipt_filename }}
+                        </a>
+                        <small class="text-muted ms-2">
+                            (Upload a new file below to replace it)
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Upload guidance alert -->
+                <div class="alert alert-light border-start border-4 border-warning py-2 mb-4">
+                    <small>
+                        <i class="bi bi-info-circle-fill text-warning me-2"></i>
+                        <strong>Receipt upload:</strong> Accepted formats are
+                        <code>PDF, JPG, PNG</code> — maximum file size is
+                        <strong>5 MB</strong>.
+                        Upload a receipt to support the financial audit trail.
+                    </small>
+                </div>
+
+                <!--
+                    ╔══════════════════════════════════════════╗
+                    ║  CRITICAL: enctype="multipart/form-data" ║
+                    ║  is REQUIRED for file uploads to work.   ║
+                    ╚══════════════════════════════════════════╝
+                -->
+                <form method="post"
+                      enctype="multipart/form-data"
+                      novalidate
+                      id="expenditure-form">
+                    {% csrf_token %}
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-medium">
+                            Title / Description <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Category + Amount Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label for="{{ form.category.id_for_label }}" class="form-label fw-medium">
+                                Category <span class="text-danger">*</span>
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">{{ form.category.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-5">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label fw-medium">
+                                Amount (₦) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold">₦</span>
+                                {{ form.amount }}
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="text-danger small mt-1">{{ form.amount.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="mb-3">
+                        <label for="{{ form.date.id_for_label }}" class="form-label fw-medium">
+                            Expenditure Date <span class="text-danger">*</span>
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="text-danger small mt-1">{{ form.date.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Receipt Upload -->
+                    <div class="mb-3">
+                        <label for="{{ form.receipt.id_for_label }}" class="form-label fw-medium">
+                            <i class="bi bi-paperclip me-1"></i>Receipt / Proof of Payment
+                        </label>
+
+                        <!-- Custom styled file input wrapper -->
+                        <div class="border rounded p-3"
+                             style="background:#fafafa;border-style:dashed!important;">
+                            {{ form.receipt }}
+                            <div class="form-text mt-2">
+                                <i class="bi bi-shield-check text-success me-1"></i>
+                                Accepted: <strong>PDF, JPG, PNG</strong> &nbsp;|&nbsp;
+                                Max size: <strong>5 MB</strong>
+                            </div>
+                        </div>
+
+                        {% if form.receipt.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                {{ form.receipt.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label fw-medium">
+                            Additional Notes
+                            <small class="fw-normal text-muted">(optional)</small>
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                        <a href="{% url 'expenditures:expenditure_list' %}"
+                           class="btn btn-outline-secondary"
+                           id="btn-exp-form-cancel">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </a>
+                        <button type="submit"
+                                class="btn btn-danger px-4"
+                                id="btn-exp-form-submit">
+                            <i class="bi bi-check-circle me-2"></i>{{ form_action }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-set today's date if field is blank (create mode)
+    const dateField = document.getElementById('id_exp_date');
+    if (dateField && !dateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateField.value = today;
+    }
+
+    // Client-side file size check — gives immediate feedback before form submission
+    const receiptInput = document.getElementById('id_exp_receipt');
+    if (receiptInput) {
+        receiptInput.addEventListener('change', function () {
+            const maxBytes = 5 * 1024 * 1024;
+            const allowed  = ['.pdf', '.jpg', '.jpeg', '.png'];
+            const file     = this.files[0];
+
+            if (!file) return;
+
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowed.includes(ext)) {
+                alert(`File type "${ext}" is not allowed.\nPlease upload a PDF, JPG, or PNG.`);
+                this.value = '';
+                return;
+            }
+            if (file.size > maxBytes) {
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                alert(`File is too large (${sizeMB} MB).\nMaximum allowed size is 5 MB.`);
+                this.value = '';
+            }
+        });
+    }
+</script>
+{% endblock %}

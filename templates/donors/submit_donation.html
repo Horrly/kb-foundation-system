@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Log a Donation{% endblock %}
+
+{% block extra_css %}
+<style>
+    .submit-header {
+        background: linear-gradient(135deg, #198754 0%, #0d4a2a 100%);
+        padding: 2rem 2rem 1.5rem;
+        color: #fff; border-radius: 1.25rem 1.25rem 0 0;
+    }
+    .drop-zone {
+        border: 2px dashed #adb5bd; border-radius: .75rem;
+        padding: 2rem 1rem; text-align: center;
+        background: #f8f9fa; cursor: pointer;
+        transition: border-color .2s, background .2s;
+        position: relative;
+    }
+    .drop-zone.drag-over { border-color: #198754; background: #e8f5ed; }
+    .drop-zone input[type="file"] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .file-preview { display:none; }
+    .file-preview.has-file { display:flex; align-items:center; gap:.75rem;
+        background:#e8f5ed; border:1px solid #badbcc;
+        border-radius:.6rem; padding:.6rem 1rem; margin-top:.5rem; }
+    .step-badge {
+        width:28px; height:28px; border-radius:50%;
+        background:rgba(255,255,255,.2); border:1.5px solid rgba(255,255,255,.5);
+        display:inline-flex; align-items:center; justify-content:center;
+        font-size:.75rem; font-weight:700; flex-shrink:0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reports:donor_dashboard' %}">My Dashboard</a></li>
+        <li class="breadcrumb-item active">Log a Donation</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+
+
+        <div class="card shadow-sm" style="border-radius:1.25rem;overflow:hidden;">
+
+            <!-- Header -->
+            <div class="submit-header">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:52px;height:52px;background:rgba(255,255,255,.15);">
+                        <i class="bi bi-cash-coin fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">Log a Donation</h4>
+                        <p class="mb-0 small" style="opacity:.8;">
+                            Logged as <strong>{{ donor_profile.full_name }}</strong>
+                            &nbsp;&mdash;&nbsp; {{ request.user.unique_id }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- How it works strip -->
+                <div class="d-flex flex-wrap gap-3 mt-3 pt-2" style="border-top:1px solid rgba(255,255,255,.2);">
+                    <span class="small d-flex align-items-center gap-2">
+                        <span class="step-badge">1</span> Fill in details &amp; upload receipt
+                    </span>
+                    <span class="small d-flex align-items-center gap-2">
+                        <span class="step-badge">2</span> Admin verifies against bank records
+                    </span>
+                    <span class="small d-flex align-items-center gap-2">
+                        <span class="step-badge">3</span> You receive a confirmation email
+                    </span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="card-body p-4">
+
+                <form method="post" enctype="multipart/form-data" novalidate id="submit-donation-form">
+                    {% csrf_token %}
+
+                    <!-- Amount -->
+                    <div class="mb-3">
+                        <label for="{{ form.amount.id_for_label }}" class="form-label fw-semibold">
+                            {{ form.amount.label }} <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text fw-bold">₦</span>
+                            {{ form.amount }}
+                        </div>
+                        {% if form.amount.errors %}
+                        <div class="text-danger small mt-1">{{ form.amount.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <!-- Date -->
+                        <div class="col-md-6">
+                            <label for="{{ form.date.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.date.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                            <div class="text-danger small mt-1">{{ form.date.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <!-- Payment Method -->
+                        <div class="col-md-6">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.payment_method.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                            <div class="text-danger small mt-1">{{ form.payment_method.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Reference Number -->
+                    <div class="mb-3">
+                        <label for="{{ form.reference_number.id_for_label }}" class="form-label fw-semibold">
+                            {{ form.reference_number.label }}
+                        </label>
+                        {{ form.reference_number }}
+                        <div class="form-text">{{ form.reference_number.help_text }}</div>
+                        {% if form.reference_number.errors %}
+                        <div class="text-danger small mt-1">{{ form.reference_number.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Receipt Upload (styled drop-zone) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ form.receipt.label }}
+                            <span class="badge text-bg-warning ms-1" style="font-size:.65rem;">Recommended</span>
+                        </label>
+                        <div class="drop-zone" id="drop-zone">
+                            {{ form.receipt }}
+                            <i class="bi bi-cloud-upload fs-2 text-secondary d-block mb-2"></i>
+                            <div class="fw-medium">Drop your receipt here or <span class="text-success">click to browse</span></div>
+                            <div class="text-muted small mt-1">PDF, PNG, JPG — max 5 MB</div>
+                        </div>
+                        <!-- File preview after selection -->
+                        <div class="file-preview" id="file-preview">
+                            <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
+                            <span class="small fw-medium" id="file-name-display"></span>
+                            <span class="badge text-bg-success ms-auto">Ready</span>
+                        </div>
+                        <div class="form-text">{{ form.receipt.help_text }}</div>
+                        {% if form.receipt.errors %}
+                        <div class="text-danger small mt-1">{{ form.receipt.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label fw-semibold">
+                            {{ form.notes.label }}
+                            <span class="badge text-bg-light text-muted ms-1 border" style="font-size:.65rem;">Optional</span>
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <div class="text-danger small mt-1">{{ form.notes.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Info banner -->
+                    <div class="alert alert-info d-flex gap-2 align-items-start py-2 mb-4">
+                        <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+                        <div class="small">
+                            Your submission will be logged as <strong>Pending</strong>.
+                            Our team will be notified immediately and will verify it against our bank records.
+                            You will receive an email confirmation once it is approved.
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'reports:donor_dashboard' %}"
+                           class="btn btn-outline-secondary" id="btn-submit-cancel">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </a>
+                        <button type="submit"
+                                class="btn px-5 py-2 fw-semibold text-white"
+                                style="background:#198754;border-radius:.6rem;"
+                                id="btn-submit-donation">
+                            <i class="bi bi-send-fill me-2"></i>Submit Donation
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const dropZone   = document.getElementById('drop-zone');
+    const fileInput  = document.querySelector('#drop-zone input[type="file"]');
+    const preview    = document.getElementById('file-preview');
+    const nameDisplay = document.getElementById('file-name-display');
+
+    function showPreview(file) {
+        if (!file) return;
+        nameDisplay.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        preview.classList.add('has-file');
+    }
+
+    fileInput.addEventListener('change', () => showPreview(fileInput.files[0]));
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            showPreview(file);
+        }
+    });
+
+    // Prevent double-submit
+    document.getElementById('submit-donation-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-submit-donation');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting…';
+    });
+</script>
+{% endblock %}

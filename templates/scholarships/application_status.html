@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load scholarship_extras %}
+
+{% block title %}My Application Status{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Status Badge Styles ── */
+    .status-banner {
+        border-radius: 1rem;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+    .status-banner .status-icon { font-size: 2.8rem; flex-shrink: 0; }
+    .status-banner .status-title { font-size: 1.4rem; font-weight: 700; }
+    .status-banner .status-sub   { font-size: .875rem; opacity: .85; margin-top: .2rem; }
+
+    /* Per-status colour schemes */
+    .status-pending      { background: #fff9e6; border-left: 6px solid #ffc107; color: #7a5c00; }
+    .status-under_review { background: #e8f4fd; border-left: 6px solid #0dcaf0; color: #055160; }
+    .status-approved     { background: #e8f5ed; border-left: 6px solid #198754; color: #0d4a2a; }
+    .status-rejected     { background: #fdf0f0; border-left: 6px solid #dc3545; color: #6e1221; }
+
+    /* Document cards */
+    .doc-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+        padding: 1rem 1.25rem;
+        transition: box-shadow .2s;
+        background: #fff;
+    }
+    .doc-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+    .doc-card .doc-icon { font-size: 1.8rem; }
+    .doc-type-badge {
+        font-size: .72rem; font-weight: 600; padding: .25em .6em;
+        border-radius: 2rem; background: #e8f0f7; color: #1a3d5c;
+    }
+
+    /* Missing-doc chip */
+    .missing-chip {
+        display: inline-flex; align-items: center; gap: .4rem;
+        background: #fff3cd; border: 1px solid #ffc107;
+        border-radius: 2rem; padding: .3rem .8rem;
+        font-size: .78rem; color: #856404;
+    }
+
+    /* Step progress */
+    .app-timeline { list-style: none; padding: 0; margin: 0; }
+    .app-timeline li {
+        position: relative; padding: .5rem .5rem .5rem 2.25rem;
+        border-left: 2px solid #dee2e6; margin-left: .75rem;
+    }
+    .app-timeline li::before {
+        content: attr(data-step);
+        position: absolute; left: -.85rem; top: .45rem;
+        width: 1.5rem; height: 1.5rem;
+        border-radius: 50%;
+        background: #dee2e6; color: #6c757d;
+        font-size: .7rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .app-timeline li.done   { border-color: #198754; }
+    .app-timeline li.done::before   { background: #198754; color: #fff; content: '✓'; }
+    .app-timeline li.active { border-color: #1a3d5c; }
+    .app-timeline li.active::before { background: #1a3d5c; color: #fff; }
+    .app-timeline li:last-child     { border-left-color: transparent; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ── -->
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0">
+            <i class="bi bi-mortarboard-fill me-2"></i>My Scholarship Application
+        </h2>
+        <p class="text-muted mt-1 mb-0">
+            Welcome, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+        </p>
+    </div>
+    {% if not application %}
+    <a href="{% url 'scholarships:application_create' %}"
+       class="btn btn-kb-primary px-4" id="btn-start-application">
+        <i class="bi bi-pencil-fill me-2"></i>Apply Now
+    </a>
+    {% endif %}
+</div>
+
+
+{% if application %}
+<!-- ════════════════════════════════════════════════════════════
+     STATUS BANNER
+════════════════════════════════════════════════════════════ -->
+<div class="status-banner status-{{ application.status }}">
+    <div class="status-icon">
+        {% if application.status == 'pending'      %}<i class="bi bi-hourglass-split"></i>
+        {% elif application.status == 'under_review'%}<i class="bi bi-eye-fill"></i>
+        {% elif application.status == 'approved'   %}<i class="bi bi-check-circle-fill"></i>
+        {% elif application.status == 'rejected'   %}<i class="bi bi-x-circle-fill"></i>
+        {% endif %}
+    </div>
+    <div>
+        <div class="status-title">{{ application.get_status_display }}</div>
+        <div class="status-sub">
+            {% if application.status == 'pending' %}
+                Your application has been received. Our team will begin reviewing it shortly.
+            {% elif application.status == 'under_review' %}
+                Your application is currently being reviewed by our scholarship committee.
+                No action is needed from you at this time.
+            {% elif application.status == 'approved' %}
+                🎉 Congratulations! Your application has been approved.
+                {% if recipient %}
+                    You have been awarded <strong>₦{{ recipient.amount_awarded|floatformat:2|intcomma }}</strong>
+                    on {{ recipient.awarded_date|date:"d M Y" }}.
+                {% endif %}
+            {% elif application.status == 'rejected' %}
+                We regret to inform you that your application was not successful this cycle.
+                You may re-apply in the next academic session.
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- ── Left Column: Application Details + Documents ── -->
+    <div class="col-lg-8">
+
+        <!-- Application Details Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center"
+                 style="background:#f8f9fa;">
+                <span class="fw-semibold">
+                    <i class="bi bi-file-earmark-text me-2 text-primary"></i>Application Details
+                </span>
+                <!-- Only allow editing while still pending -->
+                {% if application.is_editable %}
+                <a href="{% url 'scholarships:application_create' %}"
+                   class="btn btn-sm btn-outline-secondary"
+                   id="btn-edit-app">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Academic Session</small>
+                        <strong>{{ application.academic_session }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Date Submitted</small>
+                        <strong>{{ application.application_date|date:"d M Y" }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Institution</small>
+                        <strong>{{ application.institution }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Course of Study</small>
+                        <strong>{{ application.course_of_study }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Current Level</small>
+                        <strong>{{ application.level }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">CGPA</small>
+                        <strong>{{ application.current_cgpa }}</strong>
+                    </div>
+                </div>
+
+                {% if application.statement_of_purpose %}
+                <hr/>
+                <small class="text-muted d-block mb-1">Statement of Purpose</small>
+                <p class="mb-0 small" style="line-height:1.7;">
+                    {{ application.statement_of_purpose }}
+                </p>
+                {% endif %}
+
+                <!-- Reviewer notes (shown if application is not pending) -->
+                {% if application.reviewer_notes and application.status != 'pending' %}
+                <hr/>
+                <div class="alert alert-light border-start border-4 border-info py-2 mb-0">
+                    <small class="text-muted d-block mb-1">
+                        <i class="bi bi-chat-quote-fill me-1 text-info"></i>
+                        <strong>Reviewer Comment:</strong>
+                    </small>
+                    <p class="mb-0 small">{{ application.reviewer_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ── Documents Section ── -->
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center"
+                 style="background:#f8f9fa;">
+                <span class="fw-semibold">
+                    <i class="bi bi-paperclip me-2 text-success"></i>
+                    Uploaded Documents
+                    <span class="badge rounded-pill ms-1" style="background:#1a3d5c;">
+                        {{ documents|length }}
+                    </span>
+                </span>
+                {% if application.status == 'pending' or application.status == 'under_review' %}
+                <a href="{% url 'scholarships:document_upload' %}"
+                   class="btn btn-sm btn-success"
+                   id="btn-upload-doc">
+                    <i class="bi bi-plus me-1"></i>Upload
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="card-body">
+                <!-- Missing document warnings -->
+                {% if missing_types and application.status == 'pending' %}
+                <div class="mb-3">
+                    <small class="text-muted fw-semibold d-block mb-2">
+                        <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                        Still needed:
+                    </small>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for dtype in missing_types %}
+                        <span class="missing-chip">
+                            <i class="bi bi-file-earmark-x"></i>
+                            {{ doc_type_labels|get_item:dtype|default:dtype }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if documents %}
+                <div class="row g-3">
+                    {% for doc in documents %}
+                    <div class="col-md-6">
+                        <div class="doc-card d-flex align-items-start gap-3">
+                            <div class="doc-icon text-muted">
+                                {% if doc.is_image %}
+                                    <i class="bi bi-file-image-fill text-info"></i>
+                                {% else %}
+                                    <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <span class="doc-type-badge d-inline-block mb-1">
+                                    {{ doc.get_document_type_display }}
+                                </span>
+                                <div class="small text-truncate fw-medium" title="{{ doc.filename }}">
+                                    {{ doc.filename }}
+                                </div>
+                                <div class="text-muted" style="font-size:.72rem;">
+                                    Uploaded {{ doc.uploaded_at|date:"d M Y, H:i" }}
+                                </div>
+                                <a href="{{ doc.file.url }}"
+                                   target="_blank"
+                                   class="btn btn-link btn-sm p-0 mt-1"
+                                   style="font-size:.78rem;"
+                                   id="btn-view-doc-{{ doc.pk }}">
+                                    <i class="bi bi-eye me-1"></i>
+                                    {% if doc.is_image %}View Image{% else %}Download PDF{% endif %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-cloud-upload fs-2 d-block mb-2 text-secondary"></i>
+                    <p class="mb-2">No documents uploaded yet.</p>
+                    {% if application.status == 'pending' %}
+                    <a href="{% url 'scholarships:document_upload' %}"
+                       class="btn btn-sm btn-success"
+                       id="btn-upload-first-doc">
+                        <i class="bi bi-upload me-1"></i>Upload First Document
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right Column: Timeline + Award Card ── -->
+    <div class="col-lg-4">
+
+        <!-- Application Timeline -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-diagram-3 me-2 text-secondary"></i>Application Progress
+            </div>
+            <div class="card-body py-3">
+                <ul class="app-timeline">
+                    <li data-step="1"
+                        class="{% if application.status != 'pending' or documents|length > 0 %}done{% elif application.status == 'pending' %}active{% endif %}">
+                        <strong>Application Submitted</strong>
+                        <div class="small text-muted">{{ application.application_date|date:"d M Y" }}</div>
+                    </li>
+                    <li data-step="2"
+                        class="{% if documents|length > 0 %}done{% endif %}">
+                        <strong>Documents Uploaded</strong>
+                        <div class="small text-muted">{{ documents|length }} file(s) uploaded</div>
+                    </li>
+                    <li data-step="3"
+                        class="{% if application.status == 'under_review' %}active{% elif application.status == 'approved' or application.status == 'rejected' %}done{% endif %}">
+                        <strong>Under Review</strong>
+                        <div class="small text-muted">Committee assessment</div>
+                    </li>
+                    <li data-step="4"
+                        class="{% if application.status == 'approved' %}done{% elif application.status == 'rejected' %}done{% endif %}">
+                        <strong>Decision Made</strong>
+                        <div class="small text-muted">
+                            {% if application.status == 'approved' %}Approved ✓
+                            {% elif application.status == 'rejected' %}Rejected
+                            {% else %}Awaiting decision
+                            {% endif %}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Award Details (approved only) -->
+        {% if recipient %}
+        <div class="card shadow-sm border-success">
+            <div class="card-header bg-success text-white fw-semibold">
+                <i class="bi bi-award-fill me-2"></i>Award Details
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="fs-2 fw-bold text-success">
+                        ₦{{ recipient.amount_awarded|floatformat:2|intcomma }}
+                    </div>
+                    <div class="text-muted small">Amount Awarded</div>
+                </div>
+                <hr/>
+                <table class="table table-borderless small mb-0">
+                    <tr>
+                        <th class="text-muted">Award Date</th>
+                        <td>{{ recipient.awarded_date|date:"d M Y" }}</td>
+                    </tr>
+                    {% if recipient.notes %}
+                    <tr>
+                        <th class="text-muted">Notes</th>
+                        <td>{{ recipient.notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Help card -->
+        <div class="card shadow-sm mt-4 border-0" style="background:#f8f9fa;">
+            <div class="card-body py-3">
+                <p class="small text-muted mb-2 fw-semibold">
+                    <i class="bi bi-question-circle me-1"></i>Need help?
+                </p>
+                <p class="small text-muted mb-0">
+                    Contact the KB Foundation office with your application reference.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% else %}
+<!-- ── No Application Yet ── -->
+<div class="row justify-content-center mt-2">
+    <div class="col-lg-7">
+        <div class="card text-center shadow-sm">
+            <div class="card-body py-5 px-4">
+                <i class="bi bi-file-earmark-plus-fill fs-1 d-block mb-3"
+                   style="color:#e8a020;"></i>
+                <h4 class="fw-bold mb-2">Start Your Scholarship Application</h4>
+                <p class="text-muted mb-4">
+                    You have not submitted an application yet.
+                    Click the button below to begin. Make sure you have your
+                    admission letter, school ID, and academic results ready.
+                </p>
+                <a href="{% url 'scholarships:application_create' %}"
+                   class="btn btn-kb-primary btn-lg px-5"
+                   id="btn-begin-application">
+                    <i class="bi bi-pencil-fill me-2"></i>Begin Application
+                </a>
+            </div>
+        </div>
+
+        <!-- Required Documents Checklist -->
+        <div class="card mt-4">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-list-check me-2 text-success"></i>Required Documents
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex gap-2 align-items-center">
+                    <i class="bi bi-check-circle text-success"></i>
+                    Admission / Acceptance Letter
+                </li>
+                <li class="list-group-item d-flex gap-2 align-items-center">
+                    <i class="bi bi-check-circle text-success"></i>
+                    Valid School ID Card
+                </li>
+                <li class="list-group-item d-flex gap-2 align-items-center">
+                    <i class="bi bi-check-circle text-success"></i>
+                    Most Recent Academic Result / Transcript
+                </li>
+                <li class="list-group-item d-flex gap-2 align-items-center text-muted">
+                    <i class="bi bi-plus-circle text-secondary"></i>
+                    Any other supporting documents
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

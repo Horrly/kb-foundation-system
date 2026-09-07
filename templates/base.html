@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO -->
+    <title>{% block title %}KB Foundation{% endblock %} | KB Foundation Management System</title>
+    <meta name="description" content="KB Foundation Management System — donor management, scholarship applications, and financial reporting." />
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous"
+    />
+
+    <!-- Bootstrap Icons -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    />
+
+    <!-- Google Fonts: Poppins (primary) — loaded before main.css so it wins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
+
+    <!-- Global Styles -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+
+    <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       
+       All rules placed here override Bootstrap defaults without touching any
+       HTML classes, backend logic, or existing Bootstrap utility classes.
+    ═══════════════════════════════════════════════════════════════════════ */
+
+    /* ── Typography ─────────────────────────────────────────────────────── */
+    :root {
+        --kb-primary:     #1a3d5c;
+        --kb-gold:        #e8a020;
+        --kb-surface:     #f5f7fa;   /* page background */
+        --kb-card-bg:     #ffffff;
+        --kb-text:        #1e293b;
+        --kb-muted:       #64748b;
+        --kb-border:      rgba(0,0,0,.07);
+        --kb-radius-card: 16px;
+        --kb-radius-btn:  10px;
+        --kb-radius-inp:  10px;
+        --kb-shadow-card: 0 4px 24px rgba(0,0,0,.06);
+        --kb-shadow-hover:0 8px 32px rgba(0,0,0,.11);
+        --kb-shadow-nav:  0 2px 16px rgba(0,0,0,.10);
+        --kb-transition:  0.28s ease;
+    }
+
+    *,
+    *::before,
+    *::after { box-sizing: border-box; }
+
+    body {
+        font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+        font-size: .9375rem;      /* 15px — slightly more refined than 16px */
+        font-weight: 400;
+        color: var(--kb-text);
+        background-color: var(--kb-surface);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        letter-spacing: -.01em;
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    .h1, .h2, .h3, .h4, .h5, .h6 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        color: var(--kb-text);
+        letter-spacing: -.02em;
+    }
+
+    /* Subtle section separators */
+    hr { border-color: var(--kb-border); opacity: 1; }
+
+    /* ── Navbar ─────────────────────────────────────────────────────────── */
+    #main-navbar {
+        box-shadow: var(--kb-shadow-nav);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Nav links — slightly spaced, smooth underline hover */
+    #main-navbar .nav-link {
+        font-weight: 500;
+        font-size: .875rem;
+        letter-spacing: .01em;
+        padding: .45rem .75rem;
+        border-radius: 6px;
+        transition: background var(--kb-transition), color var(--kb-transition);
+    }
+    #main-navbar .nav-link:hover {
+        background: rgba(255,255,255,.12);
+    }
+    #main-navbar .nav-link.active {
+        background: rgba(255,255,255,.18);
+        font-weight: 600;
+    }
+
+    /* Brand text */
+    .navbar-brand { font-weight: 700; letter-spacing: -.02em; }
+
+    /* ── Mobile navbar: expanded state needs a visible background ───────── */
+    @media (max-width: 991.98px) {
+        #main-navbar #mainNavbar.show {
+            background: #0d2538 !important;
+            border-radius: 0 0 var(--kb-radius-card) var(--kb-radius-card);
+            padding: .5rem 1rem;
+            box-shadow: 0 8px 28px rgba(0,0,0,.35);
+        }
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────────────── */
+    .card {
+        border: none !important;
+        border-radius: var(--kb-radius-card) !important;
+        box-shadow: var(--kb-shadow-card);
+        background: var(--kb-card-bg);
+        transition: box-shadow var(--kb-transition), transform var(--kb-transition);
+        overflow: hidden;   /* keeps child border-radius clean */
+    }
+    .card:hover {
+        box-shadow: var(--kb-shadow-hover);
+        transform: translateY(-2px);
+    }
+    /* Disable hover lift on cards that contain forms — jarring on inputs */
+    .card:has(form):hover,
+    .card:has(.table):hover,
+    .review-panel:hover,
+    .award-panel:hover {
+        box-shadow: var(--kb-shadow-card);
+        transform: none;
+    }
+
+    .card-header {
+        border-bottom: 1px solid var(--kb-border) !important;
+        background: #fafbfc !important;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        padding: .85rem 1.25rem;
+        border-radius: var(--kb-radius-card) var(--kb-radius-card) 0 0 !important;
+    }
+    .card-body { padding: 1.35rem 1.4rem; }
+    .card-footer {
+        border-top: 1px solid var(--kb-border) !important;
+        background: #fafbfc !important;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────────────── */
+    .btn {
+        border-radius: var(--kb-radius-btn) !important;
+        font-weight: 500;
+        font-size: .875rem;
+        letter-spacing: .01em;
+        transition: all var(--kb-transition) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .btn:hover  { opacity: .88; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary {
+        background: var(--kb-primary) !important;
+        border-color: var(--kb-primary) !important;
+        color: #fff !important;
+    }
+    .btn-primary:hover {
+        background: #15324d !important;
+        border-color: #15324d !important;
+    }
+    .btn-warning {
+        background: var(--kb-gold) !important;
+        border-color: var(--kb-gold) !important;
+        color: #fff !important;
+    }
+    .btn-outline-primary {
+        border-color: var(--kb-primary) !important;
+        color: var(--kb-primary) !important;
+    }
+    .btn-outline-primary:hover {
+        background: var(--kb-primary) !important;
+        color: #fff !important;
+    }
+    /* Smaller pill-style buttons */
+    .btn-sm { border-radius: 7px !important; font-size: .8rem; }
+
+    /* ── Form Inputs & Selects ──────────────────────────────────────────── */
+    .form-control,
+    .form-select {
+        border-radius: var(--kb-radius-inp) !important;
+        border: 1.5px solid #dde3ec !important;
+        font-size: .875rem;
+        color: var(--kb-text);
+        background-color: #fff;
+        transition: border-color var(--kb-transition), box-shadow var(--kb-transition) !important;
+    }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--kb-primary) !important;
+        box-shadow: 0 0 0 3px rgba(26,61,92,.14) !important;
+        outline: none !important;
+    }
+    .form-control::placeholder { color: #a8b4c2; }
+
+    .form-label {
+        font-weight: 500;
+        font-size: .84rem;
+        color: var(--kb-muted);
+        margin-bottom: .35rem;
+        letter-spacing: .01em;
+    }
+
+    .input-group-text {
+        border-radius: var(--kb-radius-inp) 0 0 var(--kb-radius-inp) !important;
+        border: 1.5px solid #dde3ec !important;
+        background: #f0f4f8;
+        font-weight: 600;
+        color: var(--kb-muted);
+    }
+
+    /* ── Tables ─────────────────────────────────────────────────────────── */
+    .table {
+        font-size: .875rem;
+        color: var(--kb-text);
+        --bs-table-striped-bg: rgba(26,61,92,.025);
+    }
+    .table thead th {
+        font-weight: 600;
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--kb-muted);
+        border-bottom: 2px solid var(--kb-border);
+        background: #fafbfc;
+        padding: .85rem 1rem;
+    }
+    .table tbody td { padding: .78rem 1rem; vertical-align: middle; }
+    .table-hover tbody tr:hover { background: rgba(26,61,92,.035); }
+
+    /* ── Badges ─────────────────────────────────────────────────────────── */
+    .badge {
+        font-weight: 500;
+        font-size: .73rem;
+        letter-spacing: .03em;
+        border-radius: 6px;
+        padding: .38em .7em;
+    }
+
+    /* ── Alerts ─────────────────────────────────────────────────────────── */
+    .alert {
+        border: none !important;
+        border-radius: 12px !important;
+        font-size: .875rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .alert-success  { background: #ecfdf5 !important; color: #065f46 !important; }
+    .alert-danger   { background: #fef2f2 !important; color: #991b1b !important; }
+    .alert-warning  { background: #fffbeb !important; color: #92400e !important; }
+    .alert-info     { background: #eff6ff !important; color: #1e40af !important; }
+    .alert-secondary{ background: #f8fafc !important; color: #475569 !important; border: 1px solid #e2e8f0 !important; }
+
+    /* ── Breadcrumb ─────────────────────────────────────────────────────── */
+    .breadcrumb {
+        font-size: .8rem;
+        font-weight: 500;
+        background: transparent;
+        padding: 0;
+    }
+    .breadcrumb-item + .breadcrumb-item::before { color: var(--kb-muted); }
+
+    /* ── Quick Action Cards (Dashboard) ─────────────────────────────────── */
+    .quick-action-card {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem .5rem !important;
+        border-radius: 14px !important;
+        background: #f8faff;
+        border: 1.5px solid #e8edf5 !important;
+        color: var(--kb-text) !important;
+        text-decoration: none !important;
+        font-size: .78rem;
+        font-weight: 500;
+        transition: all var(--kb-transition) !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+    .quick-action-card:hover {
+        background: var(--kb-primary) !important;
+        color: #fff !important;
+        border-color: var(--kb-primary) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(26,61,92,.22) !important;
+    }
+    .quick-action-card:hover i { color: #fff !important; }
+    .quick-action-card i { font-size: 1.5rem; margin-bottom: .35rem; }
+
+    /* ── Stat / Metric cards ────────────────────────────────────────────── */
+    .stat-card,
+    [class*="card-stat"],
+    .metric-card {
+        border-left: 4px solid var(--kb-primary) !important;
+    }
+
+    /* ── Dropdown menus ─────────────────────────────────────────────────── */
+    .dropdown-menu {
+        border: none !important;
+        border-radius: 14px !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,.12) !important;
+        padding: .5rem .5rem;
+    }
+    .dropdown-item {
+        border-radius: 8px !important;
+        font-size: .875rem;
+        font-weight: 500;
+        padding: .55rem .9rem;
+        transition: background var(--kb-transition) !important;
+    }
+    .dropdown-item:hover { background: #f0f4f8 !important; }
+
+    /* ── Pagination ─────────────────────────────────────────────────────── */
+    .pagination .page-link {
+        border-radius: 8px !important;
+        border: none !important;
+        font-size: .85rem;
+        font-weight: 500;
+        color: var(--kb-primary);
+        margin: 0 2px;
+        transition: all var(--kb-transition);
+    }
+    .pagination .page-item.active .page-link {
+        background: var(--kb-primary) !important;
+        color: #fff !important;
+        box-shadow: 0 3px 10px rgba(26,61,92,.25);
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    footer.footer {
+        background: #0f1f2e !important;
+        font-size: .8rem;
+        letter-spacing: .01em;
+        border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    /* ── Scrollbar (Webkit) ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar       { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c8d0db; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a0aab5; }
+
+    /* ── Utility: smooth page transitions ──────────────────────────────── */
+    main#main-content { animation: fadeInUp .32s ease both; }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column h-100 m-0">
+
+<!-- ================================================================
+     NAVBAR
+================================================================ -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top
+    {% if request.resolver_match.url_name == 'home' %}navbar-homepage{% else %}bg-kb-primary{% endif %}"
+    id="main-navbar" style="z-index: 1050 !important; {% if request.resolver_match.url_name == 'home' %}position:absolute;width:100%;top:0;background:transparent!important;{% endif %}">
+
+    <div class="container-fluid">
+
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'reports:dashboard' %}">
+            <i class="bi bi-building-fill-check fs-4"></i>
+            <span>KB Foundation</span>
+        </a>
+
+        <!-- Mobile toggle -->
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Nav links -->
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                {% if user.is_authenticated %}
+
+                    <!-- Dashboard — all roles -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}"
+                           href="{% url 'reports:dashboard' %}">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Donors — admin / member only -->
+                    {% if user.role == 'admin' or user.role == 'member' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'donors' %}active{% endif %}"
+                           href="{% url 'donors:donor_list' %}">
+                            <i class="bi bi-people-fill me-1"></i>Donors
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Expenditures — admin / member only -->
+                    {% if user.role == 'admin' or user.role == 'member' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'expenditures' %}active{% endif %}"
+                           href="{% url 'expenditures:expenditure_list' %}">
+                            <i class="bi bi-cash-stack me-1"></i>Expenditures
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Scholarships — role-aware link (hidden for Donors) -->
+                    {% if user.role != 'donor' %}
+                    <li class="nav-item">
+                        {% if user.role == 'applicant' %}
+                        <a class="nav-link {% if request.resolver_match.app_name == 'scholarships' %}active{% endif %}"
+                           href="{% url 'scholarships:application_status' %}">
+                            <i class="bi bi-mortarboard-fill me-1"></i>My Application
+                        </a>
+                        {% else %}
+                        <a class="nav-link {% if request.resolver_match.app_name == 'scholarships' %}active{% endif %}"
+                           href="{% url 'scholarships:application_list' %}">
+                            <i class="bi bi-mortarboard-fill me-1"></i>Scholarships
+                        </a>
+                        {% endif %}
+                    </li>
+                    {% endif %}
+
+                    <!-- Reports — Admin / Member only -->
+                    {% if user.role == 'admin' or user.role == 'member' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'summary_report' %}active{% endif %}"
+                           href="{% url 'reports:summary_report' %}">
+                            <i class="bi bi-bar-chart-fill me-1"></i>Reports
+                        </a>
+                    </li>
+                    {% endif %}
+
+                {% endif %}
+            </ul>
+
+            <!-- Right-side: user menu or login -->
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                <!-- Notifications Dropdown -->
+                <li class="nav-item dropdown me-2">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-1"
+                       href="#" id="notifDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell-fill fs-5 position-relative">
+                        {% if unread_notifications_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="font-size: 0.55rem;">
+                                {{ unread_notifications_count }}
+                                <span class="visually-hidden">unread messages</span>
+                            </span>
+                            {% else %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="font-size: 0.55rem; display: none;">0</span>
+                            {% endif %}
+                        </i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown" style="z-index: 9999; max-width: 350px; max-height: 400px; overflow-y: auto;">
+                        <li><h6 class="dropdown-header">Notifications</h6></li>
+                        {% if latest_notifications %}
+                            {% for notif in latest_notifications %}
+                            <li class="notification-item">
+                                <div class="dropdown-item text-wrap d-flex justify-content-between align-items-start gap-2" style="font-size: 0.85rem;">
+                                    <div>
+                                        {{ notif.message }}
+                                        <div class="text-muted" style="font-size: 0.7rem;">{{ notif.created_at|timesince }} ago</div>
+                                    </div>
+                                    <button class="dismiss-notif-btn btn btn-sm btn-outline-secondary py-0 px-1 flex-shrink-0"
+                                            data-id="{{ notif.pk }}"
+                                            title="Dismiss"
+                                            style="font-size: 0.7rem; line-height: 1.6; border: none; background: none; cursor: pointer;">&#10003;</button>
+                                </div>
+                            </li>
+                            {% endfor %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-center fw-medium text-primary" style="font-size: 0.85rem;" href="{% url 'core:mark_notifications_read' %}">
+                                    Mark all as read
+                                </a>
+                            </li>
+                        {% else %}
+                            <li><span class="dropdown-item text-muted text-center" style="font-size: 0.85rem;">No new notifications</span></li>
+                        {% endif %}
+                    </ul>
+                </li>
+
+                <!-- User Dropdown -->
+                <li class="nav-item dropdown">
+                    <a
+                        class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                        href="#"
+                        id="userDropdown"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                    >
+                        <i class="bi bi-person-circle fs-5"></i>
+                        <span>{{ user.get_full_name|default:user.username }}</span>
+                        <span class="badge bg-light text-dark ms-1">{{ user.get_role_display }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="bi bi-person me-2"></i>My Profile
+                            </a>
+                        </li>
+                        {% if user.role == 'admin' %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'admin:index' %}">
+                                <i class="bi bi-gear me-2"></i>Admin Panel
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </li>
+                
+                <!-- Dedicated Logout Button -->
+                <li class="nav-item ms-3 d-flex align-items-center">
+                    <form method="post" action="{% url 'accounts:logout' %}{% if user.role == 'donor' or user.role == 'member' or user.role == 'reviewer' %}?next={% url 'accounts:portal_login' %}{% endif %}" class="m-0">
+                        {% csrf_token %}
+                        {% if user.role == 'donor' or user.role == 'member' or user.role == 'reviewer' %}
+                        <input type="hidden" name="next" value="{% url 'accounts:portal_login' %}">
+                        {% endif %}
+                        <button type="submit" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-box-arrow-right me-1"></i>Logout
+                        </button>
+                    </form>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'accounts:login' %}">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light btn-sm ms-2" href="{% url 'accounts:register' %}">
+                        Apply for Scholarship
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ================================================================
+     FLASH MESSAGES — fixed top-right, always visible, auto-stacks
+================================================================ -->
+{% if messages %}
+<div class="messages-container position-fixed top-0 end-0 p-3" style="z-index:1055; min-width:320px; max-width:480px;">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm rounded-3 mb-2" role="alert">
+        {{ message|safe }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ================================================================
+     MAIN CONTENT BLOCK
+================================================================ -->
+<main class="flex-grow-1 {% if request.resolver_match.url_name != 'home' %}container-fluid py-4{% endif %}" id="main-content">
+
+    {% block content %}
+    {% endblock %}
+</main>
+
+<!-- ================================================================
+     FOOTER
+================================================================ -->
+<footer class="footer bg-dark text-light py-3 mt-auto">
+    <div class="container text-center">
+        <small>
+            &copy; {% now "Y" %} KB Foundation &mdash; Management System &nbsp;|&nbsp;
+            Built with <i class="bi bi-heart-fill text-danger"></i> by Group 8
+        </small>
+    </div>
+</footer>
+
+<!-- Bootstrap 5 JS Bundle (includes Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+{% block extra_js %}{% endblock %}
+
+<!--
+  Vanilla JS Fallback — Alert Dismissal & Navbar Toggle
+  ======================================================
+  This runs *after* Bootstrap JS and guarantees close buttons work even
+  when Bootstrap's own event listener fails (CDN cache miss, version
+  mismatch, slow network). Uses event delegation on `document` so it
+  catches alerts injected dynamically by Django messages too.
+-->
+<script>
+(function () {
+  'use strict';
+
+  // ── 1. Bulletproof alert dismissal ───────────────────────────────────────
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.btn-close[data-bs-dismiss="alert"]');
+    if (!btn) return;
+    e.preventDefault();
+    var alert = btn.closest('.alert');
+    if (!alert) return;
+    // Fade out then remove
+    alert.classList.remove('show');
+    setTimeout(function () {
+      if (alert.parentNode) alert.parentNode.removeChild(alert);
+    }, 150);
+  });
+
+  // ── 2. Mobile navbar collapse — bidirectional, setTimeout-based ──────────
+  //
+  //  Why setTimeout instead of transitionend:
+  //  transitionend is unreliable when the navbar is position:absolute with
+  //  background:transparent (home page). If no visible CSS transition fires,
+  //  the event never dispatches and the menu stays stuck in .collapsing forever.
+  //  A fixed 350ms timeout matches Bootstrap's $transition-collapse duration
+  //  and always cleans up regardless of whether a transition actually ran.
+  //
+  document.addEventListener('DOMContentLoaded', function () {
+    var toggler = document.querySelector('.navbar-toggler');
+    var menu    = document.querySelector('#mainNavbar');
+    if (!toggler || !menu) return;
+
+    // Clear any inline height that a previous interrupted animation may have left
+    menu.style.height = '';
+
+    toggler.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      var isOpening = !menu.classList.contains('show');
+
+      if (isOpening) {
+        // ── Open (slide down) ───────────────────────────────────────────────
+        menu.classList.remove('collapse');
+        menu.classList.add('collapsing');
+        menu.style.height = '0';
+        // Force reflow so the browser registers the 0-height start state
+        void menu.offsetHeight;
+        menu.style.height = menu.scrollHeight + 'px';
+        toggler.setAttribute('aria-expanded', 'true');
+
+        setTimeout(function () {
+          menu.classList.remove('collapsing');
+          menu.classList.add('collapse', 'show');
+          menu.style.height = '';
+        }, 350);
+
+      } else {
+        // ── Close (slide up) ────────────────────────────────────────────────
+        // Lock height at current pixel value so the browser can animate FROM it
+        menu.style.height = menu.scrollHeight + 'px';
+        // Force reflow to register the explicit height before we start shrinking
+        void menu.offsetHeight;
+        menu.classList.remove('collapse', 'show');
+        menu.classList.add('collapsing');
+        // Animate to zero
+        menu.style.height = '0px';
+        toggler.setAttribute('aria-expanded', 'false');
+
+        setTimeout(function () {
+          menu.classList.remove('collapsing');
+          menu.classList.add('collapse');
+          menu.style.height = '';
+        }, 350);
+      }
+    });
+  });
+
+})();
+</script>
+
+<!-- ── Phase 29: AJAX notification dismissal ─────────────────────────── -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var badge = document.getElementById('notification-badge');
+
+    document.querySelectorAll('.dismiss-notif-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation(); // Keep the dropdown open
+
+            var notifId   = this.getAttribute('data-id');
+            var notifItem = this.closest('.notification-item');
+
+            fetch('/notifications/' + notifId + '/dismiss/', {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.status === 'success') {
+                    // Instantly remove the notification row
+                    if (notifItem) notifItem.remove();
+
+                    // Update / hide the badge live
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count;
+                            badge.style.display = '';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            })
+            .catch(function () { /* silent fail — page reload will sync */ });
+        });
+    });
+});
+</script>
+
+</body>
+</html>

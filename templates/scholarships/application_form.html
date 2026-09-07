@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for Scholarship{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-indicator {
+        display: flex; gap: 0; margin-bottom: 2rem;
+        counter-reset: step;
+    }
+    .step {
+        flex: 1; text-align: center; padding: .65rem .5rem;
+        background: #e9ecef; font-size: .8rem; font-weight: 600;
+        position: relative; color: #6c757d;
+        clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%);
+    }
+    .step:first-child { clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%); border-radius: .4rem 0 0 .4rem; }
+    .step:last-child  { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 16px 50%); border-radius: 0 .4rem .4rem 0; }
+    .step.active  { background: #1a3d5c; color: #fff; }
+    .step.done    { background: #198754; color: #fff; }
+    .word-count   { font-size: .78rem; color: #6c757d; text-align: right; margin-top: .25rem; }
+    .word-count.good { color: #198754; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'reports:applicant_dashboard' %}">My Dashboard</a>
+        </li>
+        <li class="breadcrumb-item active">Apply for Scholarship</li>
+    </ol>
+</nav>
+
+<!-- Step Indicator -->
+<div class="step-indicator mb-4">
+    <div class="step active">1. Application Form</div>
+    <div class="step">2. Upload Documents</div>
+    <div class="step">3. Under Review</div>
+    <div class="step">4. Decision</div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-md-11">
+        <div class="card shadow-sm">
+
+            <!-- Header -->
+            <div class="card-header py-3" style="background:#1a3d5c;">
+                <h4 class="mb-0 text-white d-flex align-items-center gap-2">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    KB Foundation Scholarship Application
+                </h4>
+                <small class="text-white-50">Complete all fields carefully. You can only submit one application.</small>
+            </div>
+
+            <div class="card-body p-4">
+
+
+                <!-- Info banner -->
+                <div class="alert alert-info d-flex gap-2 align-items-start py-2 mb-4">
+                    <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+                    <div>
+                        <strong>Before you begin:</strong> Gather your admission letter, school ID,
+                        and academic transcript. You will upload these in Step 2 after submitting this form.
+                    </div>
+                </div>
+
+                <form method="post" novalidate id="application-form">
+                    {% csrf_token %}
+
+                    <!-- ── Section 1: Academic Session ── -->
+                    <div class="border-bottom pb-3 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.05em;">
+                            <i class="bi bi-calendar3 me-2 text-primary"></i>Session Information
+                        </h6>
+                        <div class="mb-3">
+                            <label for="{{ form.academic_session.id_for_label }}" class="form-label fw-medium">
+                                Academic Session <span class="text-danger">*</span>
+                            </label>
+                            {{ form.academic_session }}
+                            <div class="form-text">Use the format: YYYY/YYYY e.g. 2024/2025</div>
+                            {% if form.academic_session.errors %}
+                            <div class="text-danger small mt-1">{{ form.academic_session.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ── Section 2: Institution ── -->
+                    <div class="border-bottom pb-3 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.05em;">
+                            <i class="bi bi-building me-2 text-primary"></i>Institution Details
+                        </h6>
+                        <div class="mb-3">
+                            <label for="{{ form.institution.id_for_label }}" class="form-label fw-medium">
+                                Institution Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.institution }}
+                            {% if form.institution.errors %}
+                            <div class="text-danger small mt-1">{{ form.institution.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label for="{{ form.course_of_study.id_for_label }}" class="form-label fw-medium">
+                                    Course of Study <span class="text-danger">*</span>
+                                </label>
+                                {{ form.course_of_study }}
+                                {% if form.course_of_study.errors %}
+                                <div class="text-danger small mt-1">{{ form.course_of_study.errors|join:", " }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-5">
+                                <label for="{{ form.level.id_for_label }}" class="form-label fw-medium">
+                                    Current Level <span class="text-danger">*</span>
+                                </label>
+                                {{ form.level }}
+                                {% if form.level.errors %}
+                                <div class="text-danger small mt-1">{{ form.level.errors|join:", " }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Section 3: Academic Performance ── -->
+                    <div class="border-bottom pb-3 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.05em;">
+                            <i class="bi bi-star-fill me-2 text-warning"></i>Academic Performance
+                        </h6>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label for="{{ form.current_cgpa.id_for_label }}" class="form-label fw-medium">
+                                    Current CGPA <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.current_cgpa }}
+                                    <span class="input-group-text text-muted">/ 5.0</span>
+                                </div>
+                                {% if form.current_cgpa.errors %}
+                                <div class="text-danger small mt-1">{{ form.current_cgpa.errors|join:", " }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="alert alert-light border py-2 mb-0 small">
+                                    <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                                    If your institution uses a <strong>4.0 scale</strong>, enter your actual GPA
+                                    and mention the scale in your statement below.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Section 4: Statement of Purpose ── -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.05em;">
+                            <i class="bi bi-pen-fill me-2 text-primary"></i>Statement of Purpose
+                        </h6>
+                        <label for="{{ form.statement_of_purpose.id_for_label }}" class="form-label fw-medium">
+                            Personal Statement <span class="text-danger">*</span>
+                        </label>
+                        {{ form.statement_of_purpose }}
+                        <div class="word-count" id="word-count-display">0 words</div>
+                        <div class="form-text">
+                            Minimum 50 words. Cover: your background, financial need,
+                            academic achievements, and career goals.
+                        </div>
+                        {% if form.statement_of_purpose.errors %}
+                        <div class="text-danger small mt-1">{{ form.statement_of_purpose.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                        <a href="{% url 'reports:applicant_dashboard' %}"
+                           class="btn btn-outline-secondary"
+                           id="btn-app-cancel">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn px-5 py-2 fw-semibold text-white"
+                                style="background:#1a3d5c; border-radius:.6rem;"
+                                id="btn-app-submit">
+                            <i class="bi bi-send-fill me-2"></i>{{ form_action }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Live word count for statement of purpose
+    const textarea  = document.getElementById('id_app_statement');
+    const display   = document.getElementById('word-count-display');
+    const MIN_WORDS = 50;
+
+    function updateWordCount() {
+        const text  = textarea.value.trim();
+        const count = text ? text.split(/\s+/).length : 0;
+        display.textContent = count + ' word' + (count !== 1 ? 's' : '');
+        display.className   = 'word-count' + (count >= MIN_WORDS ? ' good' : '');
+    }
+
+    textarea.addEventListener('input', updateWordCount);
+    updateWordCount(); // Init on page load (for edit mode)
+
+    // Disable submit button on click to prevent double submission
+    document.getElementById('application-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-app-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting…';
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Pending Donations{% endblock %}
+
+{% block extra_css %}
+<style>
+    .queue-header {
+        background: linear-gradient(135deg, #c4780a 0%, #7a4800 100%);
+        border-radius: 1.25rem; padding: 1.5rem 2rem;
+        color: #fff; margin-bottom: 1.5rem;
+    }
+    .queue-kpi {
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.25);
+        border-radius: .75rem; padding: .75rem 1.25rem; text-align:center;
+    }
+    .queue-kpi .num { font-size:1.8rem; font-weight:800; color:#f5c85a; line-height:1; }
+    .queue-kpi .lbl { font-size:.72rem; opacity:.8; text-transform:uppercase; letter-spacing:.07em; }
+    .receipt-btn { font-size:.78rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reports:admin_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Pending Donations</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="queue-header d-flex align-items-start justify-content-between flex-wrap gap-3">
+    <div>
+        <h4 class="fw-bold mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-hourglass-split"></i>
+            Pending Donation Verification Queue
+            {% if pending_donations %}
+            <span class="badge rounded-pill" style="background:rgba(255,255,255,.2);font-size:.85rem;">
+                {{ pending_donations|length }}
+            </span>
+            {% endif %}
+        </h4>
+        <p class="mb-0 mt-1 small" style="opacity:.8;">
+            Sorted oldest-first (FIFO). Review each submission and verify against bank records.
+        </p>
+    </div>
+    <div class="d-flex gap-3 text-center flex-wrap">
+        <div class="queue-kpi">
+            <div class="num">{{ pending_donations|length }}</div>
+            <div class="lbl">Pending</div>
+        </div>
+        <div class="queue-kpi">
+            <div class="num" style="font-size:1.3rem;">₦{{ total_pending_value|floatformat:0|intcomma }}</div>
+            <div class="lbl">Total Claimed</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+{% if pending_donations %}
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover mb-0 align-middle" id="pending-table">
+                <thead style="background:#f8f9fa;">
+                    <tr>
+                        <th class="ps-3">#</th>
+                        <th>Donor</th>
+                        <th>Submitted</th>
+                        <th>Date of Payment</th>
+                        <th>Method</th>
+                        <th>Reference No.</th>
+                        <th class="text-end">Amount Claimed</th>
+                        <th class="text-center">Receipt</th>
+                        {% if can_verify %}<th class="text-center">Action</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donation in pending_donations %}
+                    <tr id="pending-row-{{ donation.pk }}">
+                        <td class="ps-3 text-muted small">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ donation.donor.full_name }}</div>
+                            <div class="text-muted small">{{ donation.donor.email }}</div>
+                            {% if donation.donor.user %}
+                            <div class="text-muted" style="font-size:.7rem;">
+                                {{ donation.donor.user.unique_id }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ donation.recorded_at|date:"d M Y, H:i" }}</td>
+                        <td class="small">{{ donation.date|date:"d M Y" }}</td>
+                        <td>
+                            <span class="badge text-bg-light border text-dark">
+                                {{ donation.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td class="small text-muted font-monospace">
+                            {{ donation.reference_number|default:"—" }}
+                        </td>
+                        <td class="text-end fw-bold" style="color:#c4780a;">
+                            ₦{{ donation.amount|floatformat:2|intcomma }}
+                        </td>
+                        <td class="text-center">
+                            {% if donation.receipt %}
+                            <a href="{{ donation.receipt.url }}"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-primary receipt-btn"
+                               id="btn-receipt-{{ donation.pk }}">
+                                <i class="bi bi-file-earmark-arrow-down me-1"></i>View
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">
+                                <i class="bi bi-dash-circle me-1"></i>None
+                            </span>
+                            {% endif %}
+                        </td>
+                        {% if can_verify %}
+                        <td class="text-center">
+                            <a href="{% url 'donors:verify_donation' donation.pk %}"
+                               class="btn btn-sm btn-warning fw-semibold"
+                               id="btn-verify-{{ donation.pk }}">
+                                <i class="bi bi-shield-check me-1"></i>Verify
+                            </a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot style="background:#f8f9fa;">
+                    <tr>
+                        <td colspan="{% if can_verify %}6{% else %}5{% endif %}" class="ps-3 fw-semibold text-muted small">
+                            Total ({{ pending_donations|length }} submission{{ pending_donations|length|pluralize }})
+                        </td>
+                        <td class="text-end fw-bold" style="color:#c4780a;">
+                            ₦{{ total_pending_value|floatformat:2|intcomma }}
+                        </td>
+                        <td colspan="{% if can_verify %}2{% else %}1{% endif %}"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty state -->
+<div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-check2-circle fs-1 d-block mb-3 text-success"></i>
+        <h5 class="fw-bold mb-2">All Caught Up!</h5>
+        <p class="text-muted mb-0">There are no pending donations awaiting verification at this time.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Member notice -->
+{% if not can_verify %}
+<div class="alert alert-secondary d-flex gap-2 mt-3 py-2">
+    <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+    <small>
+        As a <strong>Member</strong>, you can view the pending queue and download receipts.
+        Only <strong>Admins</strong> can approve or reject submissions.
+    </small>
+</div>
+{% endif %}
+
+{% endblock %}

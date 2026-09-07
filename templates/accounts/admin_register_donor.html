@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Register New Donor{% endblock %}
+
+{% block extra_css %}
+<style>
+    .onboard-header { background: linear-gradient(135deg, #198754 0%, #0d4a2a 100%); }
+    .info-pill {
+        background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+        border-radius: 2rem; padding: .35rem .9rem;
+        font-size: .75rem; color: rgba(255,255,255,.85); display: inline-flex; align-items: center; gap: .4rem;
+    }
+    .section-divider {
+        font-size: .7rem; text-transform: uppercase; letter-spacing: .1em;
+        color: #6c757d; font-weight: 700;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: .4rem; margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reports:admin_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Register New Donor</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+
+        <div class="card shadow-sm" style="border-radius:1.25rem;overflow:hidden;">
+
+            <!-- Card header -->
+            <div class="onboard-header p-4 text-white">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:52px;height:52px;background:rgba(255,255,255,.15);flex-shrink:0;">
+                        <i class="bi bi-heart-fill fs-4" style="color:#f5c85a;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">Register New Donor</h4>
+                        <p class="mb-0" style="opacity:.75;font-size:.88rem;">
+                            Creates a portal login account <em>and</em> a linked Donor profile automatically.
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="info-pill"><i class="bi bi-key-fill"></i>Password auto-generated</span>
+                    <span class="info-pill"><i class="bi bi-envelope-fill"></i>Credentials emailed automatically</span>
+                    <span class="info-pill"><i class="bi bi-person-lines-fill"></i>Donor profile linked automatically</span>
+                    <span class="info-pill"><i class="bi bi-shield-lock-fill"></i>First-login password change enforced</span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="card-body p-4">
+
+                <div class="alert alert-success d-flex gap-2 align-items-start py-2 mb-4">
+                    <i class="bi bi-info-circle-fill mt-1 flex-shrink-0 text-success"></i>
+                    <div class="small">
+                        A <strong>secure temporary password</strong> will be auto-generated and emailed to the donor.
+                        A <strong>Donor profile record</strong> will be created automatically and linked to their portal account.
+                    </div>
+                </div>
+
+                <form method="post" novalidate id="donor-onboard-form">
+                    {% csrf_token %}
+
+                    <!-- ── Portal Login Details ── -->
+                    <div class="section-divider">
+                        <i class="bi bi-person-circle me-1"></i>Portal Login Details
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label fw-medium">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.first_name.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label fw-medium">
+                                Last Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.last_name.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="{{ form.email.id_for_label }}" class="form-label fw-medium">
+                                Email Address <span class="text-danger">*</span>
+                            </label>
+                            {{ form.email }}
+                            <div class="form-text">Credentials and temporary password will be sent here.</div>
+                            {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ── Donor Profile Details ── -->
+                    <div class="section-divider mt-4">
+                        <i class="bi bi-heart-fill me-1 text-danger"></i>Donor Profile Details (optional)
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label fw-medium">
+                                Phone Number
+                            </label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.address.id_for_label }}" class="form-label fw-medium">
+                                Address
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="text-danger small mt-1">{{ form.address.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label fw-medium">
+                                Internal Notes
+                                <span class="badge text-bg-warning ms-1" style="font-size:.65rem;vertical-align:middle;">Admin only</span>
+                            </label>
+                            {{ form.notes }}
+                            <div class="form-text">Not visible to the donor. For internal use only.</div>
+                            {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="my-3"/>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'reports:admin_dashboard' %}"
+                           class="btn btn-outline-secondary" id="btn-donor-cancel">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </a>
+                        <button type="submit"
+                                class="btn px-5 py-2 fw-semibold text-white"
+                                style="background:#198754;border-radius:.6rem;"
+                                id="btn-donor-submit">
+                            <i class="bi bi-heart-fill me-2"></i>Create Donor Account
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Link to Member registration -->
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                Need to register a member instead?
+                <a href="{% url 'accounts:admin_register_member' %}" class="text-decoration-none">
+                    Go to Member Registration &rarr;
+                </a>
+            </small>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('donor-onboard-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-donor-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
+    });
+</script>
+{% endblock %}

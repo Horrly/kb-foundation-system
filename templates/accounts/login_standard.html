@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | KB Foundation</title>
+    <meta name="description" content="Sign in to the KB Foundation scholarship portal." />
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous"/>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700\&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <style>
+        :root {
+            --kb-blue:       #1a3d5c;
+            --kb-blue-dark:  #0d2538;
+            --kb-blue-mid:   #2a5a80;
+            --kb-accent:     #e8a020;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+            margin: 0; min-height: 100vh;
+            display: flex; align-items: stretch;
+            background: #f5f7fa;
+        }
+
+        /* ── Left decorative panel ─────────────────────────────────────── */
+        .auth-panel {
+            flex: 0 0 44%;
+            background: linear-gradient(160deg, var(--kb-blue) 0%, var(--kb-blue-dark) 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 3.5rem 3rem;
+            color: #fff; position: relative; overflow: hidden;
+        }
+
+        /* Decorative circles */
+        .auth-panel::before {
+            content: ''; position: absolute;
+            width: 420px; height: 420px; border-radius: 50%;
+            background: rgba(255,255,255,.03);
+            top: -100px; left: -120px;
+        }
+        .auth-panel::after {
+            content: ''; position: absolute;
+            width: 280px; height: 280px; border-radius: 50%;
+            background: rgba(232,160,32,.10);
+            bottom: -70px; right: -70px;
+        }
+        .auth-panel .panel-inner { position: relative; z-index: 1; text-align: center; max-width: 340px; }
+
+        .panel-logo-ring {
+            width: 88px; height: 88px; border-radius: 50%;
+            background: rgba(232,160,32,.15);
+            border: 2px solid rgba(232,160,32,.35);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem; font-size: 2.5rem; color: var(--kb-accent);
+        }
+
+        .auth-panel h2 {
+            font-size: 1.85rem; font-weight: 800; line-height: 1.25;
+            margin-bottom: .75rem;
+        }
+        .auth-panel .tagline {
+            color: rgba(255,255,255,.6); font-size: .88rem;
+            line-height: 1.6; margin-bottom: 2.5rem;
+        }
+
+        /* Stats strip */
+        .stat-strip {
+            display: flex; gap: 1.25rem; justify-content: center;
+            border-top: 1px solid rgba(255,255,255,.12);
+            padding-top: 1.75rem; margin-top: .5rem; width: 100%;
+        }
+        .stat-item { text-align: center; }
+        .stat-item .num {
+            font-size: 1.4rem; font-weight: 800; color: var(--kb-accent);
+            display: block; line-height: 1;
+        }
+        .stat-item .lbl { font-size: .65rem; opacity: .6; text-transform: uppercase; letter-spacing: .07em; margin-top: .2rem; }
+
+        /* Portal badge */
+        .portal-badge {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 2rem; padding: .3rem .9rem;
+            font-size: .72rem; opacity: .75; margin-bottom: 1.25rem;
+        }
+
+        /* ── Right form panel ──────────────────────────────────────────── */
+        .auth-form-wrapper {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: #f5f7fa; padding: 2.5rem 2rem;
+        }
+        .login-card {
+            width: 100%; max-width: 420px;
+            background: #fff; border-radius: 1.4rem;
+            box-shadow: 0 12px 50px rgba(26,61,92,.12);
+            padding: 2.75rem 2.5rem;
+            animation: fadeUp .35s ease both;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-card .portal-chip {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: #e8f0f8; color: var(--kb-blue);
+            border-radius: 2rem; padding: .25rem .85rem;
+            font-size: .72rem; font-weight: 600; margin-bottom: 1.1rem;
+            border: 1px solid rgba(26,61,92,.15);
+        }
+
+        .login-card h1 {
+            font-size: 1.65rem; font-weight: 800;
+            color: var(--kb-blue); margin-bottom: .25rem;
+        }
+        .login-card .subtitle {
+            color: #6c757d; font-size: .855rem; margin-bottom: 1.75rem; line-height: 1.5;
+        }
+
+        /* Form fields */
+        .form-control {
+            border-radius: .65rem; border-color: #dee2e6;
+            font-size: .95rem; padding: .7rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--kb-blue);
+            box-shadow: 0 0 0 .22rem rgba(26,61,92,.15);
+        }
+        .form-label { font-size: .85rem; font-weight: 600; color: #374151; margin-bottom: .4rem; }
+
+        /* Password wrapper */
+        .pw-wrapper { position: relative; }
+        .pw-toggle {
+            position: absolute; right: .9rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: #aaa; cursor: pointer; font-size: 1.05rem; padding: 0; z-index: 5;
+        }
+        .pw-toggle:hover { color: var(--kb-blue); }
+
+        /* Submit button */
+        .btn-login {
+            background: linear-gradient(135deg, var(--kb-blue) 0%, var(--kb-blue-mid) 100%);
+            color: #fff; border: none;
+            padding: .8rem 1rem; font-size: .98rem; font-weight: 700;
+            border-radius: .65rem; width: 100%;
+            transition: opacity .2s, transform .15s; letter-spacing: .015em;
+        }
+        .btn-login:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+        .btn-login:active { transform: translateY(0); }
+
+        /* Error styling */
+        .errorlist { list-style: none; padding: 0; margin: .35rem 0 0; }
+        .errorlist li { color: #dc3545; font-size: .8rem; }
+        .alert-cred-error {
+            background: #fff3f3; border-left: 4px solid #dc3545;
+            border-radius: .6rem; padding: .7rem 1rem;
+            color: #842029; font-size: .855rem; margin-bottom: 1rem;
+            display: flex; gap: .5rem; align-items: center;
+        }
+
+        /* Portal switch link */
+        .portal-switch {
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: .75rem; padding: .75rem 1rem;
+            text-align: center; margin-top: 1.25rem; font-size: .82rem; color: #6c757d;
+        }
+        .portal-switch a { color: var(--kb-blue); font-weight: 600; text-decoration: none; }
+        .portal-switch a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .auth-panel { display: none; }
+            .auth-form-wrapper { background: var(--kb-blue); }
+            .login-card { box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Left Decorative Panel ===== -->
+<div class="auth-panel d-none d-md-flex">
+    <div class="panel-inner">
+        <div class="portal-badge">
+            <i class="bi bi-mortarboard-fill"></i>
+            Scholarship Portal
+        </div>
+        <div class="panel-logo-ring">
+            <i class="bi bi-building-fill-check"></i>
+        </div>
+        <h2>KB Foundation<br/>Scholarship Portal</h2>
+        <p class="tagline">
+            Apply for a scholarship, track your application status,
+            and manage your academic journey — all in one place.
+        </p>
+        <div class="stat-strip">
+            <div class="stat-item">
+                <span class="num">500+</span>
+                <span class="lbl">Scholars</span>
+            </div>
+            <div class="stat-item">
+                <span class="num">₦50M+</span>
+                <span class="lbl">Awarded</span>
+            </div>
+            <div class="stat-item">
+                <span class="num">97%</span>
+                <span class="lbl">Grad Rate</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Right Form Panel ===== -->
+<div class="auth-form-wrapper">
+    <div class="login-card">
+
+        <span class="portal-chip">
+            <i class="bi bi-mortarboard-fill"></i>
+            Scholarship Portal
+        </span>
+
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in with your email address to access your account.</p>
+
+        <!-- Flash messages: fixed top-right toast -->
+        {% if messages %}
+        <div class="messages-container position-fixed top-0 end-0 p-3" style="z-index:1055; min-width:300px; max-width:440px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm rounded-3 mb-2" role="alert">
+                {{ message|safe }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="alert-cred-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:login' %}" novalidate id="login-form">
+            {% csrf_token %}
+
+            <!-- Email / identifier field -->
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    {{ form.username.label }}
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div class="mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="{{ form.password.id_for_label }}" class="form-label mb-0">
+                        Password
+                    </label>
+                    <a href="#" class="text-decoration-none" style="font-size:.8rem;color:var(--kb-blue);"
+                       tabindex="-1" id="btn-forgot-pw">Forgot password?</a>
+                </div>
+                <div class="pw-wrapper">
+                    {{ form.password }}
+                    <button type="button" class="pw-toggle" id="togglePassword" aria-label="Show/hide password">
+                        <i class="bi bi-eye" id="pwIcon"></i>
+                    </button>
+                </div>
+                {% if form.password.errors %}
+                    <ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Remember me -->
+            <div class="mb-4 mt-3 form-check">
+                {{ form.remember_me }}
+                <label class="form-check-label" style="font-size:.85rem;" for="{{ form.remember_me.id_for_label }}">
+                    Keep me signed in
+                </label>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-login" id="btn-login-submit">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+        </form>
+
+        <hr class="my-4" style="border-color:#eef0f3;"/>
+
+        <!-- Register CTA -->
+        <p class="text-center mb-0" style="font-size:.855rem; color:#6c757d;">
+            New scholarship applicant?
+            <a href="{% url 'accounts:register' %}" class="fw-semibold text-decoration-none"
+               style="color:var(--kb-blue);" id="btn-create-account">Create an account</a>
+        </p>
+
+        <!-- Portal switch -->
+        <div class="portal-switch">
+            <i class="bi bi-key-fill me-1 text-warning"></i>
+            Donor or Member?
+            <a href="{% url 'accounts:portal_login' %}" id="btn-switch-portal">
+                Sign in to the Staff Portal &rarr;
+            </a>
+        </div>
+
+        <!-- Return to homepage -->
+        <div class="text-center mt-3">
+            <a href="{% url 'core:home' %}" class="text-decoration-none"
+               style="font-size:.78rem;color:#9ca3af;" id="btn-home-link">
+                <i class="bi bi-arrow-left me-1"></i>Return to Homepage
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmSN5W0NXUXqcRoLnCMjm4gYdLW"
+        crossorigin="anonymous"></script>
+
+<script>
+    // Password visibility toggle
+    const pwField = document.getElementById('id_login_password');
+    const pwIcon  = document.getElementById('pwIcon');
+    document.getElementById('togglePassword').addEventListener('click', () => {
+        const visible = pwField.type === 'text';
+        pwField.type  = visible ? 'password' : 'text';
+        pwIcon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+
+    // Prevent double-submit
+    document.getElementById('login-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-login-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in…';
+    });
+</script>
+
+<!-- Phase 23: Bulletproof alert dismissal (delegated, no Bootstrap JS dependency) -->
+<script>
+(function () {
+    'use strict';
+    // Use event delegation on document so it works for alerts in any container,
+    // including the position:fixed toast container added in Phase 20.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-close[data-bs-dismiss="alert"]');
+        if (!btn) return;
+        e.preventDefault();
+        var alertBox = btn.closest('.alert');
+        if (!alertBox) return;
+        alertBox.classList.remove('show');
+        setTimeout(function () {
+            if (alertBox.parentNode) alertBox.parentNode.removeChild(alertBox);
+        }, 150);
+    });
+}());
+</script>
+
+</body>
+</html>

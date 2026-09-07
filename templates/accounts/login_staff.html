@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staff & Donor Portal | KB Foundation</title>
+    <meta name="description" content="Sign in to the KB Foundation Donor and Staff portal." />
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous"/>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700\&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <style>
+        :root {
+            --kb-gold:       #e8a020;
+            --kb-gold-light: #f5c85a;
+            --kb-navy:       #0d1f2d;
+            --kb-navy-mid:   #152536;
+            --kb-navy-light: #1e3a50;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+            margin: 0; min-height: 100vh;
+            display: flex; align-items: stretch;
+            background: #f5f0e8;
+        }
+
+        /* ── Left decorative panel (gold/navy) ─────────────────────────── */
+        .auth-panel {
+            flex: 0 0 44%;
+            background: linear-gradient(160deg, var(--kb-navy-light) 0%, var(--kb-navy) 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 3.5rem 3rem;
+            color: #fff; position: relative; overflow: hidden;
+        }
+
+        /* Decorative gold circles */
+        .auth-panel::before {
+            content: ''; position: absolute;
+            width: 360px; height: 360px; border-radius: 50%;
+            background: rgba(232,160,32,.08);
+            top: -80px; left: -100px;
+        }
+        .auth-panel::after {
+            content: ''; position: absolute;
+            width: 300px; height: 300px; border-radius: 50%;
+            background: rgba(232,160,32,.06);
+            bottom: -80px; right: -80px;
+        }
+        /* Extra accent arc */
+        .auth-panel .arc {
+            position: absolute; z-index: 0;
+            width: 180px; height: 180px; border-radius: 50%;
+            border: 2px solid rgba(232,160,32,.18);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .auth-panel .panel-inner { position: relative; z-index: 1; text-align: center; max-width: 340px; }
+
+        .panel-logo-ring {
+            width: 92px; height: 92px; border-radius: 50%;
+            background: rgba(232,160,32,.18);
+            border: 2px solid rgba(232,160,32,.5);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem; font-size: 2.6rem; color: var(--kb-gold);
+        }
+
+        .auth-panel h2 {
+            font-size: 1.85rem; font-weight: 800; line-height: 1.25; margin-bottom: .75rem;
+        }
+        .auth-panel h2 span { color: var(--kb-gold-light); }
+
+        .auth-panel .tagline {
+            color: rgba(255,255,255,.55); font-size: .88rem;
+            line-height: 1.6; margin-bottom: 2.25rem;
+        }
+
+        /* Role chips strip */
+        .role-strip {
+            display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center;
+            border-top: 1px solid rgba(255,255,255,.1);
+            padding-top: 1.6rem;
+        }
+        .role-chip {
+            display: inline-flex; align-items: center; gap: .35rem;
+            background: rgba(232,160,32,.12);
+            border: 1px solid rgba(232,160,32,.25);
+            border-radius: 2rem; padding: .28rem .8rem;
+            font-size: .72rem; color: var(--kb-gold-light);
+        }
+
+        /* Portal badge */
+        .portal-badge {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: rgba(232,160,32,.12);
+            border: 1px solid rgba(232,160,32,.3);
+            border-radius: 2rem; padding: .3rem .9rem;
+            font-size: .72rem; color: var(--kb-gold-light); margin-bottom: 1.25rem;
+        }
+
+        /* ── Right form panel ──────────────────────────────────────────── */
+        .auth-form-wrapper {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: #f5f0e8; padding: 2.5rem 2rem;
+        }
+        .login-card {
+            width: 100%; max-width: 420px;
+            background: #fff; border-radius: 1.4rem;
+            box-shadow: 0 12px 50px rgba(13,31,45,.14);
+            padding: 2.75rem 2.5rem;
+            animation: fadeUp .35s ease both;
+            border-top: 4px solid var(--kb-gold);
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-card .portal-chip {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: #fef9ec; color: #8a5a00;
+            border-radius: 2rem; padding: .25rem .85rem;
+            font-size: .72rem; font-weight: 600; margin-bottom: 1.1rem;
+            border: 1px solid rgba(232,160,32,.35);
+        }
+
+        .login-card h1 {
+            font-size: 1.65rem; font-weight: 800;
+            color: var(--kb-navy); margin-bottom: .25rem;
+        }
+        .login-card .subtitle {
+            color: #6c757d; font-size: .855rem; margin-bottom: 1.75rem; line-height: 1.5;
+        }
+
+        /* Unique ID helper */
+        .uid-hint {
+            background: #fef9ec; border: 1px solid rgba(232,160,32,.35);
+            border-radius: .55rem; padding: .5rem .85rem;
+            font-size: .78rem; color: #7a5000; margin-top: .4rem;
+            display: flex; align-items: center; gap: .4rem;
+        }
+
+        /* Form fields */
+        .form-control {
+            border-radius: .65rem; border-color: #dee2e6;
+            font-size: .95rem; padding: .7rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--kb-gold);
+            box-shadow: 0 0 0 .22rem rgba(232,160,32,.2);
+        }
+        .form-label { font-size: .85rem; font-weight: 600; color: #374151; margin-bottom: .4rem; }
+
+        /* Password wrapper */
+        .pw-wrapper { position: relative; }
+        .pw-toggle {
+            position: absolute; right: .9rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: #aaa; cursor: pointer; font-size: 1.05rem; padding: 0; z-index: 5;
+        }
+        .pw-toggle:hover { color: var(--kb-navy); }
+
+        /* Submit button — gold gradient */
+        .btn-login {
+            background: linear-gradient(135deg, var(--kb-gold) 0%, #c97d10 100%);
+            color: #fff; border: none;
+            padding: .8rem 1rem; font-size: .98rem; font-weight: 700;
+            border-radius: .65rem; width: 100%;
+            transition: opacity .2s, transform .15s; letter-spacing: .015em;
+        }
+        .btn-login:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+        .btn-login:active { transform: translateY(0); }
+
+        /* Error styling */
+        .errorlist { list-style: none; padding: 0; margin: .35rem 0 0; }
+        .errorlist li { color: #dc3545; font-size: .8rem; }
+        .alert-cred-error {
+            background: #fff3f3; border-left: 4px solid #dc3545;
+            border-radius: .6rem; padding: .7rem 1rem;
+            color: #842029; font-size: .855rem; margin-bottom: 1rem;
+            display: flex; gap: .5rem; align-items: center;
+        }
+
+        /* Portal switch link */
+        .portal-switch {
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: .75rem; padding: .75rem 1rem;
+            text-align: center; margin-top: 1.25rem; font-size: .82rem; color: #6c757d;
+        }
+        .portal-switch a { color: var(--kb-navy); font-weight: 600; text-decoration: none; }
+        .portal-switch a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .auth-panel { display: none; }
+            .auth-form-wrapper { background: var(--kb-navy); }
+            .login-card { box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Left Decorative Panel (gold/navy) ===== -->
+<div class="auth-panel d-none d-md-flex">
+    <div class="arc"></div>
+    <div class="panel-inner">
+        <div class="portal-badge">
+            <i class="bi bi-shield-lock-fill"></i>
+            Staff &amp; Donor Portal
+        </div>
+        <div class="panel-logo-ring">
+            <i class="bi bi-heart-fill"></i>
+        </div>
+        <h2>KB Foundation<br/><span>Staff Portal</span></h2>
+        <p class="tagline">
+            Securely access your Donor or Member dashboard.
+            Manage donations, track contributions,
+            and stay connected with the foundation.
+        </p>
+        <div class="role-strip">
+            <span class="role-chip"><i class="bi bi-heart-fill"></i>Donors</span>
+            <span class="role-chip"><i class="bi bi-person-badge-fill"></i>Members</span>
+            <span class="role-chip"><i class="bi bi-eye-fill"></i>Reviewers</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Right Form Panel ===== -->
+<div class="auth-form-wrapper">
+    <div class="login-card">
+
+        <span class="portal-chip">
+            <i class="bi bi-shield-lock-fill"></i>
+            Staff &amp; Donor Portal
+        </span>
+
+        <h1>Staff Sign In</h1>
+
+        <!-- Flash messages: fixed top-right toast -->
+        {% if messages %}
+        <div class="messages-container position-fixed top-0 end-0 p-3" style="z-index:1055; min-width:300px; max-width:440px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm rounded-3 mb-2" role="alert">
+                {{ message|safe }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="alert-cred-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:portal_login' %}" novalidate id="login-form">
+            {% csrf_token %}
+
+            <!-- Unique ID field -->
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    {{ form.username.label }}
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div class="mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="{{ form.password.id_for_label }}" class="form-label mb-0">
+                        Password
+                    </label>
+                    <a href="#" class="text-decoration-none" style="font-size:.8rem;color:var(--kb-gold);"
+                       tabindex="-1" id="btn-forgot-pw">Forgot password?</a>
+                </div>
+                <div class="pw-wrapper">
+                    {{ form.password }}
+                    <button type="button" class="pw-toggle" id="togglePassword" aria-label="Show/hide password">
+                        <i class="bi bi-eye" id="pwIcon"></i>
+                    </button>
+                </div>
+                {% if form.password.errors %}
+                    <ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Remember me -->
+            <div class="mb-4 mt-3 form-check">
+                {{ form.remember_me }}
+                <label class="form-check-label" style="font-size:.85rem;" for="{{ form.remember_me.id_for_label }}">
+                    Keep me signed in
+                </label>
+            </div>
+
+            <!-- Submit (gold button) -->
+            <button type="submit" class="btn-login" id="btn-login-submit">
+                <i class="bi bi-shield-check me-2"></i>Access Portal
+            </button>
+        </form>
+
+        <hr class="my-4" style="border-color:#eef0f3;"/>
+
+        <!-- Portal switch -->
+        <div class="portal-switch">
+            <i class="bi bi-mortarboard-fill me-1" style="color:#1a3d5c;"></i>
+            Scholarship Applicant?
+            <a href="{% url 'accounts:login' %}" id="btn-switch-standard">
+                Go to Standard Login &rarr;
+            </a>
+        </div>
+
+        <!-- Return to homepage -->
+        <div class="text-center mt-3">
+            <a href="{% url 'core:home' %}" class="text-decoration-none"
+               style="font-size:.78rem;color:#9ca3af;" id="btn-home-link">
+                <i class="bi bi-arrow-left me-1"></i>Return to Homepage
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmSN5W0NXUXqcRoLnCMjm4gYdLW"
+        crossorigin="anonymous"></script>
+
+<script>
+    // Password visibility toggle
+    const pwField = document.getElementById('id_login_password');
+    const pwIcon  = document.getElementById('pwIcon');
+    document.getElementById('togglePassword').addEventListener('click', () => {
+        const visible = pwField.type === 'text';
+        pwField.type  = visible ? 'password' : 'text';
+        pwIcon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+
+    // Prevent double-submit
+    document.getElementById('login-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-login-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in…';
+    });
+</script>
+
+<!-- Phase 23: Bulletproof alert dismissal (delegated, no Bootstrap JS dependency) -->
+<script>
+(function () {
+    'use strict';
+    // Use event delegation on document so it works for alerts in any container,
+    // including the position:fixed toast container added in Phase 20.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-close[data-bs-dismiss="alert"]');
+        if (!btn) return;
+        e.preventDefault();
+        var alertBox = btn.closest('.alert');
+        if (!alertBox) return;
+        alertBox.classList.remove('show');
+        setTimeout(function () {
+            if (alertBox.parentNode) alertBox.parentNode.removeChild(alertBox);
+        }, 150);
+    });
+}());
+</script>
+
+</body>
+</html>

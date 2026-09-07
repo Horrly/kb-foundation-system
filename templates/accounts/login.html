@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | KB Foundation Management System</title>
+    <meta name="description" content="Sign in to the KB Foundation Management System." />
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous"/>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700\&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+    <style>
+        :root {
+            --kb-primary:      #1a3d5c;
+            --kb-primary-dark: #122b42;
+            --kb-accent:       #e8a020;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+        }
+
+        /* ---- Left decorative panel (hidden on mobile) ---- */
+        .auth-panel {
+            flex: 0 0 42%;
+            background: linear-gradient(160deg, var(--kb-primary) 0%, var(--kb-primary-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2.5rem;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-panel::before {
+            content: '';
+            position: absolute;
+            width: 380px; height: 380px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.04);
+            top: -80px; left: -100px;
+        }
+        .auth-panel::after {
+            content: '';
+            position: absolute;
+            width: 260px; height: 260px;
+            border-radius: 50%;
+            background: rgba(232,160,32,.12);
+            bottom: -60px; right: -60px;
+        }
+        .auth-panel .panel-logo {
+            font-size: 4rem;
+            color: var(--kb-accent);
+            margin-bottom: 1.25rem;
+            position: relative; z-index: 1;
+        }
+        .auth-panel h2 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            text-align: center;
+            position: relative; z-index: 1;
+            line-height: 1.3;
+        }
+        .auth-panel p {
+            color: rgba(255,255,255,0.65);
+            text-align: center;
+            font-size: .9rem;
+            margin-top: .75rem;
+            max-width: 280px;
+            position: relative; z-index: 1;
+        }
+        .auth-panel .feature-list {
+            list-style: none;
+            padding: 0; margin: 2rem 0 0;
+            position: relative; z-index: 1;
+        }
+        .auth-panel .feature-list li {
+            display: flex; align-items: center; gap: .6rem;
+            font-size: .88rem; color: rgba(255,255,255,0.8);
+            margin-bottom: .65rem;
+        }
+        .auth-panel .feature-list li i { color: var(--kb-accent); font-size: 1rem; }
+
+        /* ---- Right form panel ---- */
+        .auth-form-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f7fa;
+            padding: 2rem 1.5rem;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 40px rgba(0,0,0,.10);
+            padding: 2.5rem 2.25rem;
+            animation: fadeUp .4s ease both;
+        }
+        @keyframes fadeUp {
+            from { opacity:0; transform: translateY(20px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+        .login-card h1 {
+            font-size: 1.6rem; font-weight: 700;
+            color: var(--kb-primary); margin-bottom: .25rem;
+        }
+        .login-card .subtitle {
+            color: #6c757d; font-size: .875rem; margin-bottom: 1.75rem;
+        }
+
+        /* Input styling */
+        .form-floating label { color: #888; font-size: .9rem; }
+        .form-control { border-radius: .6rem; border-color: #dee2e6; }
+        .form-control:focus {
+            border-color: var(--kb-primary);
+            box-shadow: 0 0 0 .2rem rgba(26,61,92,.15);
+        }
+
+        /* Password wrapper */
+        .pw-wrapper { position: relative; }
+        .pw-toggle {
+            position: absolute; right: .9rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: #aaa; cursor: pointer; font-size: 1.05rem; padding:0;
+            z-index: 5;
+        }
+        .pw-toggle:hover { color: var(--kb-primary); }
+
+        /* Submit button */
+        .btn-login {
+            background: linear-gradient(135deg, var(--kb-primary) 0%, #2a5a80 100%);
+            color: #fff; border: none;
+            padding: .8rem 1rem;
+            font-size: 1rem; font-weight: 600;
+            border-radius: .6rem; width: 100%;
+            transition: opacity .2s, transform .15s;
+            letter-spacing: .02em;
+        }
+        .btn-login:hover { opacity: .9; transform: translateY(-1px); color:#fff; }
+        .btn-login:active { transform: translateY(0); }
+
+        /* Error styling */
+        .errorlist { list-style:none; padding:0; margin:.35rem 0 0; }
+        .errorlist li { color: #dc3545; font-size: .82rem; }
+
+        /* Non-field errors */
+        .alert-form-error {
+            background: #fff3f3; border-left: 4px solid #dc3545;
+            border-radius: .5rem; padding: .75rem 1rem;
+            color: #dc3545; font-size: .88rem; margin-bottom:1rem;
+        }
+
+        @media (max-width: 768px) {
+            .auth-panel { display: none; }
+            .auth-form-wrapper { background: linear-gradient(135deg, var(--kb-primary), var(--kb-primary-dark)); }
+            .login-card { box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Decorative Left Panel ===== -->
+<div class="auth-panel d-none d-md-flex">
+    <i class="bi bi-building-fill-check panel-logo"></i>
+    <h2>KB Foundation<br/>Management System</h2>
+    <p>Empowering communities through education and transparent giving.</p>
+    <ul class="feature-list">
+        <li><i class="bi bi-check-circle-fill"></i> Donor & Donation Tracking</li>
+        <li><i class="bi bi-check-circle-fill"></i> Scholarship Applications</li>
+        <li><i class="bi bi-check-circle-fill"></i> Expenditure Management</li>
+        <li><i class="bi bi-check-circle-fill"></i> Role-Based Access Control</li>
+        <li><i class="bi bi-check-circle-fill"></i> Reports & Dashboard</li>
+    </ul>
+</div>
+
+<!-- ===== Right Form Panel ===== -->
+<div class="auth-form-wrapper">
+    <div class="login-card">
+
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in to your KB Foundation account</p>
+
+        <!-- Flash messages: fixed top-right toast -->
+        {% if messages %}
+        <div class="messages-container position-fixed top-0 end-0 p-3" style="z-index:1055; min-width:300px; max-width:440px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm rounded-3 mb-2" role="alert">
+                {{ message|safe }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Non-field form errors -->
+        {% if form.non_field_errors %}
+        <div class="alert-form-error">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:login' %}" novalidate id="login-form">
+            {% csrf_token %}
+
+            <!-- Username / Email -->
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label fw-medium">
+                    Username or Email
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                        {% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="{{ form.password.id_for_label }}" class="form-label fw-medium mb-0">
+                        Password
+                    </label>
+                    {# Forgot password — hook this up post-deadline #}
+                    <small><a href="#" class="text-decoration-none" style="color:var(--kb-primary)">Forgot password?</a></small>
+                </div>
+                <div class="pw-wrapper">
+                    {{ form.password }}
+                    <button type="button" class="pw-toggle" id="togglePassword" aria-label="Show/hide password">
+                        <i class="bi bi-eye" id="pwIcon"></i>
+                    </button>
+                </div>
+                {% if form.password.errors %}
+                    <ul class="errorlist">
+                        {% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Remember Me -->
+            <div class="mb-4 form-check">
+                {{ form.remember_me }}
+                <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">
+                    Keep me logged in
+                </label>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-login" id="btn-login-submit">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+        </form>
+
+        <hr class="my-4"/>
+
+        <p class="text-center mb-0" style="font-size:.875rem; color:#6c757d;">
+            New scholarship applicant?
+            <a href="{% url 'accounts:register' %}" class="fw-semibold text-decoration-none"
+               style="color:var(--kb-primary);">Create an account</a>
+        </p>
+
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmSN5W0NXUXqcRoLnCMjm4gYdLW"
+        crossorigin="anonymous"></script>
+
+<script>
+    // Password toggle
+    const pwField = document.getElementById('id_login_password');
+    const pwIcon  = document.getElementById('pwIcon');
+    document.getElementById('togglePassword').addEventListener('click', () => {
+        const visible = pwField.type === 'text';
+        pwField.type = visible ? 'password' : 'text';
+        pwIcon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+
+    // Disable submit button on submit to prevent double-clicks
+    document.getElementById('login-form').addEventListener('submit', function () {
+        const btn = document.getElementById('btn-login-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in…';
+    });
+</script>
+
+<!-- Phase 23: Bulletproof alert dismissal (delegated, no Bootstrap JS dependency) -->
+<script>
+(function () {
+    'use strict';
+    // Use event delegation on document so it works for alerts in any container,
+    // including the position:fixed toast container added in Phase 20.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-close[data-bs-dismiss="alert"]');
+        if (!btn) return;
+        e.preventDefault();
+        var alertBox = btn.closest('.alert');
+        if (!alertBox) return;
+        alertBox.classList.remove('show');
+        setTimeout(function () {
+            if (alertBox.parentNode) alertBox.parentNode.removeChild(alertBox);
+        }, 150);
+    });
+}());
+</script>
+
+</body>
+</html>

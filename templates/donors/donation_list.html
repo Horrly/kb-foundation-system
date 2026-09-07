@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}All Donations{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0"><i class="bi bi-cash-stack me-2"></i>Donations</h2>
+        <p class="text-muted mb-0 mt-1">All recorded donation transactions</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'donors:donor_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-people me-1"></i>Donors
+        </a>
+        <a href="{% url 'donors:donation_create' %}" class="btn btn-kb-primary px-4"
+           id="btn-record-donation">
+            <i class="bi bi-plus-circle me-2"></i>Record Donation
+        </a>
+    </div>
+</div>
+
+<!-- Grand Total KPI -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-success"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.4rem;">₦{{ grand_total|floatformat:0|intcomma }}</div>
+                <div class="kpi-label">Filtered Total</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-primary"><i class="bi bi-receipt"></i></div>
+            <div>
+                <div class="kpi-value">{{ filter.qs.count }}</div>
+                <div class="kpi-label">Records Shown</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold" style="background-color:#f8f9fa;">
+        <i class="bi bi-funnel me-2 text-secondary"></i>Filter Donations
+    </div>
+    <div class="card-body">
+        <form method="get" id="donation-filter-form" class="row g-3 align-items-end">
+            <div class="col-md-3 col-6">
+                <label class="form-label fw-medium mb-1">Donor</label>
+                {{ filter.form.donor }}
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label fw-medium mb-1">Date From</label>
+                {{ filter.form.date_from }}
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label fw-medium mb-1">Date To</label>
+                {{ filter.form.date_to }}
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label fw-medium mb-1">Payment Method</label>
+                {{ filter.form.payment_method }}
+            </div>
+            <div class="col-md-1 col-6">
+                <button type="submit" class="btn btn-kb-primary w-100" id="btn-apply-filter">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <div class="col-md-2 col-6">
+                <a href="{% url 'donors:donation_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Donations Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if donations %}
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover align-middle mb-0" id="donations-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Donor</th>
+                        <th class="text-end">Amount (₦)</th>
+                        <th>Payment Method</th>
+                        <th>Reference No.</th>
+                        <th>Recorded At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donation in donations %}
+                    <tr id="donation-row-{{ donation.pk }}">
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+                        <td>{{ donation.date|date:"d M Y" }}</td>
+                        <td>
+                            <a href="{% url 'donors:donor_detail' donation.donor.pk %}"
+                               class="text-decoration-none fw-medium" style="color:var(--kb-primary);">
+                                {{ donation.donor.full_name }}
+                            </a>
+                        </td>
+                        <td class="text-end fw-bold text-success">
+                            ₦{{ donation.amount|floatformat:2|intcomma }}
+                        </td>
+                        <td>
+                            <span class="badge text-bg-light text-dark border">
+                                {{ donation.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td class="small font-monospace text-muted">
+                            {{ donation.reference_number|default:'—' }}
+                        </td>
+                        <td class="small text-muted">{{ donation.recorded_at|date:"d M Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="3" class="text-end">Filtered Grand Total:</td>
+                        <td class="text-end text-success">₦{{ grand_total|floatformat:2|intcomma }}</td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+            <h5>No donations found</h5>
+            <p class="mb-3">Adjust your filters or record a new donation.</p>
+            <a href="{% url 'donors:donation_create' %}" class="btn btn-kb-primary">
+                <i class="bi bi-plus-circle me-1"></i>Record First Donation
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if donations %}
+    <div class="card-footer text-muted small d-flex justify-content-between">
+        <span>{{ filter.qs.count }} record(s) shown</span>
+        <span class="fw-semibold text-success">Total: ₦{{ grand_total|floatformat:2|intcomma }}</span>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

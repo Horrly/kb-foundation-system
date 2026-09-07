@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'donors:donation_list' %}">Donations</a></li>
+        <li class="breadcrumb-item active">{{ page_title }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+        <div class="card shadow-sm">
+            <!-- Card Header -->
+            <div class="card-header py-3" style="background-color:#198754;">
+                <h4 class="mb-0 text-white d-flex align-items-center gap-2">
+                    <i class="bi bi-cash-coin"></i>
+                    {{ page_title }}
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+
+
+                <!-- Info tip -->
+                <div class="alert alert-info d-flex align-items-start gap-2 py-2 mb-4">
+                    <i class="bi bi-info-circle-fill mt-1"></i>
+                    <small>
+                        All amounts are recorded in Nigerian Naira (₦).
+                        Ensure the reference number matches the bank teller, transaction ID, or cheque number.
+                    </small>
+                </div>
+
+                <form method="post" novalidate id="donation-form">
+                    {% csrf_token %}
+
+                    <!-- Donor -->
+                    <div class="mb-3">
+                        <label for="{{ form.donor.id_for_label }}" class="form-label fw-medium">
+                            Donor <span class="text-danger">*</span>
+                        </label>
+                        {{ form.donor }}
+                        {% if form.donor.errors %}
+                            <div class="text-danger small mt-1">{{ form.donor.errors|join:", " }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            Donor not listed?
+                            <a href="{% url 'donors:donor_create' %}" target="_blank">Add them first →</a>
+                        </div>
+                    </div>
+
+                    <!-- Amount + Date Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label fw-medium">
+                                Amount (₦) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold">₦</span>
+                                {{ form.amount }}
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="text-danger small mt-1">{{ form.amount.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.date.id_for_label }}" class="form-label fw-medium">
+                                Donation Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger small mt-1">{{ form.date.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Payment Method + Reference Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label fw-medium">
+                                Payment Method <span class="text-danger">*</span>
+                            </label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="text-danger small mt-1">{{ form.payment_method.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.reference_number.id_for_label }}" class="form-label fw-medium">
+                                Reference / Receipt No.
+                            </label>
+                            {{ form.reference_number }}
+                            {% if form.reference_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.reference_number.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label fw-medium">
+                            Notes <small class="fw-normal text-muted">(optional)</small>
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                        <a href="{% url 'donors:donation_list' %}"
+                           class="btn btn-outline-secondary"
+                           id="btn-donation-form-cancel">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success px-4" id="btn-donation-form-submit">
+                            <i class="bi bi-check-circle me-2"></i>{{ form_action }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-set today's date if the date field is empty
+    const dateField = document.getElementById('id_donation_date');
+    if (dateField && !dateField.value) {
+        dateField.valueAsDate = new Date();
+    }
+</script>
+{% endblock %}

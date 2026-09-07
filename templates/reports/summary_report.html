@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Financial Summary Report{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        body { background: #fff !important; }
+        .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    }
+    .report-header {
+        background: linear-gradient(135deg, #1a3d5c 0%, #0d2538 100%);
+        color: #fff; border-radius: var(--kb-radius);
+        padding: 2rem; margin-bottom: 1.5rem;
+    }
+    .stat-box {
+        text-align: center; padding: 1.5rem;
+        border-radius: .6rem; background: #fff;
+        box-shadow: var(--kb-card-shadow);
+    }
+    .stat-box .stat-num { font-size: 2rem; font-weight: 800; }
+    .cat-row-bar {
+        height: 10px; border-radius: 5px; background: #e9ecef; overflow: hidden;
+    }
+    .cat-row-fill { height: 100%; border-radius: 5px; background: var(--kb-primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Report Header -->
+<div class="report-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h2 class="mb-1 fw-bold text-white">
+            <i class="bi bi-file-earmark-bar-graph me-2"></i>Financial Summary Report
+        </h2>
+        <p class="mb-0 text-white-50">KB Foundation Management System — Generated {{ "now"|date:"d M Y, H:i" }}</p>
+    </div>
+    <div class="no-print d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-light btn-sm" id="btn-print-report">
+            <i class="bi bi-printer me-1"></i>Print / Save PDF
+        </button>
+        <a href="{% url 'reports:admin_dashboard' %}" class="btn btn-light btn-sm" id="btn-back-dashboard">
+            <i class="bi bi-arrow-left me-1"></i>Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- ── Section 1: Financial Overview ── -->
+<h5 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.08em;font-size:.78rem;">
+    <i class="bi bi-bank me-2"></i>Financial Overview
+</h5>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-box">
+            <div class="stat-num text-success">₦{{ total_donations|floatformat:0|intcomma }}</div>
+            <div class="text-muted small mt-1">Total Donations Received</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-box">
+            <div class="stat-num text-danger">₦{{ total_expenditures|floatformat:0|intcomma }}</div>
+            <div class="text-muted small mt-1">Total Expenditures</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-box">
+            <div class="stat-num {% if net_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                ₦{{ net_balance|floatformat:0|intcomma }}
+            </div>
+            <div class="text-muted small mt-1">Net Balance</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-box">
+            <div class="stat-num text-primary">{{ total_donors }}</div>
+            <div class="text-muted small mt-1">Total Donors</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Section 2: Expenditures by Category ── -->
+<h5 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.08em;font-size:.78rem;">
+    <i class="bi bi-pie-chart-fill me-2"></i>Expenditures by Category
+</h5>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        {% if exp_by_category %}
+        {% with max_total=exp_by_category.0.total %}
+        <div class="d-flex flex-column gap-3">
+            {% for row in exp_by_category %}
+            <div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small fw-medium">{{ row.label }}</span>
+                    <span class="small fw-bold text-danger">
+                        ₦{{ row.total|floatformat:2|intcomma }}
+                        <span class="text-muted fw-normal">({{ row.count }} record{{ row.count|pluralize }})</span>
+                    </span>
+                </div>
+                <div class="cat-row-bar">
+                    {% if max_total > 0 %}
+                    <div class="cat-row-fill"
+                         style="width:{% widthratio row.total max_total 100 %}%;"></div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endwith %}
+        {% else %}
+        <p class="text-muted text-center py-3 small">No expenditure records yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Section 3: Scholarship Programme ── -->
+<h5 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing:.08em;font-size:.78rem;">
+    <i class="bi bi-mortarboard-fill me-2"></i>Scholarship Programme
+</h5>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="stat-box"><div class="stat-num text-warning">{{ pending }}</div><div class="text-muted small">Pending</div></div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-box"><div class="stat-num text-info">{{ under_review }}</div><div class="text-muted small">Under Review</div></div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-box"><div class="stat-box"><div class="stat-num text-success">{{ approved }}</div><div class="text-muted small">Approved</div></div></div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-box"><div class="stat-num text-danger">{{ rejected }}</div><div class="text-muted small">Rejected</div></div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-box"><div class="stat-num text-success">{{ recipients }}</div><div class="text-muted small">Recipients</div></div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-box">
+            <div class="stat-num text-primary" style="font-size:1.4rem;">₦{{ total_awarded|floatformat:0|intcomma }}</div>
+            <div class="text-muted small">Total Awarded</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body small text-muted text-center">
+        <i class="bi bi-info-circle me-1"></i>
+        This report reflects all data as of <strong>{% now "d M Y, H:i" %}</strong>.
+        For detailed breakdowns, use the individual Donors, Expenditures, and Scholarships modules.
+    </div>
+</div>
+
+{% endblock %}

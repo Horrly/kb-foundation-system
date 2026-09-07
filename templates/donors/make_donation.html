@@ -1,0 +1,103 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Make a Donation{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reports:donor_dashboard' %}">My Dashboard</a></li>
+        <li class="breadcrumb-item active">Make a Donation</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+
+        <div class="card shadow-sm border-0 mb-4" style="border-radius:1.25rem;overflow:hidden;">
+            <!-- Header -->
+            <div class="p-4 text-white" style="background: linear-gradient(135deg, #1a3d5c 0%, #0d2538 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:52px;height:52px;background:rgba(255,255,255,.15);">
+                        <i class="bi bi-bank fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1 fw-bold">Make a Donation</h4>
+                        <p class="mb-0 opacity-75 small">Official Foundation Bank Transfer Details</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body p-4">
+                <div class="alert alert-info border-0 rounded-3 mb-4 d-flex gap-3 align-items-center" role="alert">
+                    <i class="bi bi-info-circle-fill fs-4 flex-shrink-0 text-primary"></i>
+                    <div class="small">
+                        Please use the verified bank details below to transfer your donation. After completing your payment, click <strong>"Log New Donation"</strong> to submit your receipt and transaction reference.
+                    </div>
+                </div>
+
+                <!-- Bank Details Table / Card -->
+                <div class="border rounded-3 p-3 mb-4 bg-light">
+                    <h6 class="fw-bold text-uppercase text-muted small mb-3" style="letter-spacing: .05em;">
+                        <i class="bi bi-credit-card-2-front me-1"></i> Bank Account Information
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">Bank Name</span>
+                            <span class="fw-semibold">{{ bank_name }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">Account Name</span>
+                            <span class="fw-semibold">{{ account_name }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">Account Number (NGN)</span>
+                            <span class="fw-bold fs-5 text-success font-monospace">{{ account_number }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">Payment Reference Suggestion</span>
+                            <code class="small">{{ request.user.unique_id }} / Your Name</code>
+                        </div>
+                        {% if sort_code %}
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">Sort Code</span>
+                            <span class="small font-monospace">{{ sort_code }}</span>
+                        </div>
+                        {% endif %}
+                        {% if swift_code %}
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">SWIFT / BIC</span>
+                            <span class="small font-monospace">{{ swift_code }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Next Steps Instructions -->
+                <h6 class="fw-bold text-uppercase text-muted small mb-2" style="letter-spacing: .05em;">
+                    <i class="bi bi-list-check me-1"></i> Steps to Complete Your Donation
+                </h6>
+                <ol class="small text-muted ps-3 mb-4">
+                    <li class="mb-1">Transfer your desired contribution to the account specified above.</li>
+                    <li class="mb-1">Save or screenshot your payment receipt/confirmation.</li>
+                    <li class="mb-1">Click the button below to log your transaction reference and upload your receipt.</li>
+                    <li>Our team will verify the payment and confirm your contribution record.</li>
+                </ol>
+
+                <!-- Actions -->
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <a href="{% url 'donors:donor_submit_donation' %}" class="btn btn-success flex-grow-1 py-2 fw-semibold rounded-pill">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Log New Donation
+                    </a>
+                    <a href="{% url 'reports:donor_dashboard' %}" class="btn btn-outline-secondary py-2 rounded-pill">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

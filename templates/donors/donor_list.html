@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Donors{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0"><i class="bi bi-people-fill me-2"></i>Donors</h2>
+        <p class="text-muted mb-0 mt-1">Manage all KB Foundation donor profiles</p>
+    </div>
+    <a href="{% url 'donors:donor_create' %}" class="btn btn-kb-primary px-4"
+       id="btn-add-donor">
+        <i class="bi bi-person-plus-fill me-2"></i>Add Donor
+    </a>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-primary"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_donors }}</div>
+                <div class="kpi-label">Total Donors</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-success"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.4rem;">₦{{ total_donations|floatformat:0|intcomma }}</div>
+                <div class="kpi-label">Total Received</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-info"><i class="bi bi-funnel-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ filter.qs.count }}</div>
+                <div class="kpi-label">Filtered Results</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-warning"><i class="bi bi-receipt-cutoff"></i></div>
+            <div>
+                <div class="kpi-value">
+                    <a href="{% url 'donors:donation_list' %}" class="text-decoration-none" style="color:var(--kb-primary)">
+                        View All <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </div>
+                <div class="kpi-label">Donation Records</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter / Search Card -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body py-3">
+        <form method="get" id="donor-search-form" class="row g-2 align-items-end">
+            <div class="col-md-8 col-12">
+                <label class="form-label mb-1 fw-medium" for="id_donor_search">
+                    <i class="bi bi-search me-1"></i>Search Donors
+                </label>
+                {{ filter.form.search }}
+            </div>
+            <div class="col-md-2 col-6">
+                <button type="submit" class="btn btn-kb-primary w-100" id="btn-donor-search">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+            </div>
+            <div class="col-md-2 col-6">
+                <a href="{% url 'donors:donor_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Donor Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if donors %}
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover align-middle mb-0" id="donors-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th class="text-center">Donations</th>
+                        <th class="text-end">Total Donated</th>
+                        <th>Date Added</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donor in donors %}
+                    <tr id="donor-row-{{ donor.pk }}">
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+                        <td>
+                            <a href="{% url 'donors:donor_detail' donor.pk %}"
+                               class="fw-semibold text-decoration-none" style="color:var(--kb-primary)">
+                                <i class="bi bi-person-circle me-1 text-muted"></i>{{ donor.full_name }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ donor.email }}" class="text-muted text-decoration-none small">
+                                {{ donor.email }}
+                            </a>
+                        </td>
+                        <td class="small">{{ donor.phone|default:'—' }}</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill" style="background-color:#1a3d5c;">
+                                {{ donor.donation_count }}
+                            </span>
+                        </td>
+                        <td class="text-end fw-semibold text-success">
+                            ₦{{ donor.total_donated|floatformat:2|intcomma }}
+                        </td>
+                        <td class="small text-muted">{{ donor.created_at|date:"d M Y" }}</td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'donors:donor_detail' donor.pk %}"
+                                   class="btn btn-outline-primary" title="View Profile"
+                                   id="btn-view-donor-{{ donor.pk }}">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'donors:donor_update' donor.pk %}"
+                                   class="btn btn-outline-secondary" title="Edit"
+                                   id="btn-edit-donor-{{ donor.pk }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if request.user.role == 'admin' %}
+                                <a href="{% url 'donors:donor_delete' donor.pk %}"
+                                   class="btn btn-outline-danger" title="Delete"
+                                   id="btn-del-donor-{{ donor.pk }}">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+            <h5>No donors found</h5>
+            <p class="mb-3">
+                {% if request.GET.search %}
+                    No donors matched "<strong>{{ request.GET.search }}</strong>".
+                    <a href="{% url 'donors:donor_list' %}">Clear search</a>
+                {% else %}
+                    Get started by adding your first donor.
+                {% endif %}
+            </p>
+            <a href="{% url 'donors:donor_create' %}" class="btn btn-kb-primary">
+                <i class="bi bi-person-plus-fill me-1"></i>Add First Donor
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if donors %}
+    <div class="card-footer text-muted small d-flex justify-content-between">
+        <span>Showing {{ filter.qs.count }} of {{ total_donors }} donor(s)</span>
+        <a href="{% url 'donors:donation_list' %}" class="text-decoration-none" style="color:var(--kb-primary);">
+            <i class="bi bi-cash-stack me-1"></i>View All Donations →
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

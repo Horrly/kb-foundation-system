@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Reviewer Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0"><i class="bi bi-eye me-2"></i>Reviewer Dashboard</h2>
+    </div>
+    <a href="{% url 'scholarships:application_list' %}" class="btn btn-kb-primary">
+        <i class="bi bi-list-ul me-1"></i>All Applications
+    </a>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-warning"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="kpi-value">{{ pending }}</div><div class="kpi-label">Pending</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-info"><i class="bi bi-eye-fill"></i></div>
+            <div><div class="kpi-value">{{ under_review }}</div><div class="kpi-label">Under Review</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-success"><i class="bi bi-check-circle-fill"></i></div>
+            <div><div class="kpi-value">{{ approved }}</div><div class="kpi-label">Approved</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-danger"><i class="bi bi-x-circle-fill"></i></div>
+            <div><div class="kpi-value">{{ rejected }}</div><div class="kpi-label">Rejected</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Queue Table -->
+<div class="card shadow-sm">
+    <div class="card-header fw-semibold d-flex justify-content-between" style="background:#f8f9fa;">
+        <span>
+            <i class="bi bi-clipboard2-pulse me-2 text-warning"></i>
+            Review Queue — Pending &amp; Under Review
+            <span class="badge rounded-pill ms-1" style="background:#1a3d5c;">{{ queue|length }}</span>
+        </span>
+    </div>
+    <div class="card-body p-0">
+        {% if queue %}
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover align-middle mb-0" id="review-queue-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Applicant</th>
+                        <th>Institution</th>
+                        <th>Session</th>
+                        <th>CGPA</th>
+                        <th>Docs</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in queue %}
+                    <tr id="queue-row-{{ app.pk }}">
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-medium">{{ app.applicant.get_full_name|default:app.applicant.username }}</div>
+                            <div class="text-muted small">{{ app.applicant.email }}</div>
+                        </td>
+                        <td class="small">{{ app.institution }}</td>
+                        <td class="small">{{ app.academic_session }}</td>
+                        <td class="small">{{ app.current_cgpa }}</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill" style="background:#1a3d5c;">{{ app.documents.count }}</span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {% if app.status == 'pending' %}bg-warning text-dark{% elif app.status == 'under_review' %}bg-info text-dark{% elif app.status == 'approved' %}bg-success{% elif app.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ app.get_status_display }}</span>
+                        </td>
+                        <td class="small text-muted">{{ app.application_date|date:"d M Y" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'scholarships:application_detail_staff' app.pk %}"
+                               class="btn btn-sm btn-kb-primary"
+                               id="btn-review-{{ app.pk }}">
+                                <i class="bi bi-eye me-1"></i>Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-check2-all fs-1 d-block mb-3 text-success"></i>
+            <h5>All caught up!</h5>
+            <p class="mb-0">No applications are currently awaiting review.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

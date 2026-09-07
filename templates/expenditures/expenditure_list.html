@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Expenditures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-card {
+        border-radius: .75rem;
+        padding: 1.1rem 1.25rem;
+        transition: transform .2s, box-shadow .2s;
+        cursor: default;
+    }
+    .category-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    }
+    .category-card .cat-icon { font-size: 1.8rem; opacity: .85; }
+    .category-card .cat-amount { font-size: 1.25rem; font-weight: 700; }
+    .category-card .cat-label  { font-size: .75rem; text-transform: uppercase;
+                                  letter-spacing: .07em; opacity: .75; }
+    .category-card .cat-count  { font-size: .78rem; opacity: .65; margin-top:.15rem; }
+    .receipt-link { font-size: .78rem; }
+    .badge-category {
+        font-size: .72rem; padding: .3em .65em;
+        border-radius: 2rem; font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ─────────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0"><i class="bi bi-cash-stack me-2"></i>Expenditures</h2>
+        <p class="text-muted mb-0 mt-1">Track and manage all KB Foundation spending</p>
+    </div>
+    <a href="{% url 'expenditures:expenditure_create' %}"
+       class="btn btn-kb-primary px-4" id="btn-add-expenditure">
+        <i class="bi bi-plus-circle-fill me-2"></i>Record Expenditure
+    </a>
+</div>
+
+<!-- ── Grand Total KPI ─────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-danger"><i class="bi bi-graph-down-arrow"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.35rem;">₦{{ grand_total_all|floatformat:0|intcomma }}</div>
+                <div class="kpi-label">Grand Total Spent</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-secondary"><i class="bi bi-receipt-cutoff"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_records }}</div>
+                <div class="kpi-label">Total Records</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-warning"><i class="bi bi-funnel-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ filter.qs.count }}</div>
+                <div class="kpi-label">Filtered Results</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-danger"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.35rem;">₦{{ grand_total|floatformat:0|intcomma }}</div>
+                <div class="kpi-label">Filtered Total</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Category Summary Cards ──────────────────────────────── -->
+{% if category_summary %}
+<div class="mb-4">
+    <h6 class="text-muted fw-semibold mb-2 ps-1">
+        <i class="bi bi-pie-chart-fill me-1"></i> Spending by Category (All Time)
+    </h6>
+    <div class="row g-2">
+        {% for cat in category_summary %}
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="category-card shadow-sm" style="background:{{ cat.bg }};border-left:4px solid {{ cat.color }};">
+                <div class="cat-icon" style="color:{{ cat.color }};">
+                    <i class="bi {{ cat.icon }}"></i>
+                </div>
+                <div class="cat-amount mt-1" style="color:{{ cat.color }};">₦{{ cat.total|floatformat:0|intcomma }}</div>
+                <div class="cat-label" style="color:{{ cat.color }};">{{ cat.label }}</div>
+                <div class="cat-count text-muted">{{ cat.count }} record{{ cat.count|pluralize }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Filters ─────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold" style="background:#f8f9fa;">
+        <i class="bi bi-funnel me-2 text-secondary"></i>Filter Expenditures
+    </div>
+    <div class="card-body">
+        <form method="get" id="expenditure-filter-form" class="row g-3 align-items-end">
+            <div class="col-md-3 col-12">
+                <label class="form-label fw-medium mb-1" for="id_filter_exp_title">Search</label>
+                {{ filter.form.title }}
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label fw-medium mb-1">Category</label>
+                {{ filter.form.category }}
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label fw-medium mb-1">Date From</label>
+                {{ filter.form.date_from }}
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label fw-medium mb-1">Date To</label>
+                {{ filter.form.date_to }}
+            </div>
+            <div class="col-md-1 col-3">
+                <button type="submit" class="btn btn-kb-primary w-100" id="btn-exp-filter"
+                        title="Apply filter">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <div class="col-md-2 col-3">
+                <a href="{% url 'expenditures:expenditure_list' %}"
+                   class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Data Table ──────────────────────────────────────────── -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if expenditures %}
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover align-middle mb-0" id="expenditures-table">
+                <thead>
+                    <tr>
+                        <th style="width:3%">#</th>
+                        <th>Title / Description</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th class="text-end">Amount (₦)</th>
+                        <th class="text-center">Receipt</th>
+                        <th>Recorded By</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in expenditures %}
+                    <tr id="exp-row-{{ exp.pk }}">
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+
+                        <td>
+                            <div class="fw-medium">{{ exp.title }}</div>
+                            {% if exp.notes %}
+                            <small class="text-muted">{{ exp.notes|truncatechars:50 }}</small>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% with cat_key=exp.category %}
+                            <span class="badge badge-category"
+                                  style="
+                                    {% if cat_key == 'scholarship_grants' %}background:#1a3d5c;color:#fff;
+                                    {% elif cat_key == 'administrative'   %}background:#6c757d;color:#fff;
+                                    {% elif cat_key == 'events'           %}background:#0d6efd;color:#fff;
+                                    {% elif cat_key == 'marketing'        %}background:#e8a020;color:#fff;
+                                    {% elif cat_key == 'logistics'        %}background:#198754;color:#fff;
+                                    {% else                               %}background:#adb5bd;color:#000;
+                                    {% endif %}
+                                  ">
+                                {{ exp.get_category_display }}
+                            </span>
+                            {% endwith %}
+                        </td>
+
+                        <td class="small">{{ exp.date|date:"d M Y" }}</td>
+
+                        <td class="text-end fw-bold text-danger">
+                            ₦{{ exp.amount|floatformat:2|intcomma }}
+                        </td>
+
+                        <!-- Receipt: view or download link -->
+                        <td class="text-center">
+                            {% if exp.receipt %}
+                                {% if exp.receipt_is_image %}
+                                    <a href="{{ exp.receipt.url }}" target="_blank"
+                                       class="receipt-link text-success"
+                                       title="View image receipt"
+                                       id="btn-view-receipt-{{ exp.pk }}">
+                                        <i class="bi bi-image-fill me-1"></i>View
+                                    </a>
+                                {% else %}
+                                    <a href="{{ exp.receipt.url }}" target="_blank"
+                                       class="receipt-link text-primary"
+                                       title="Download PDF receipt"
+                                       id="btn-dl-receipt-{{ exp.pk }}">
+                                        <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted small">
+                                    <i class="bi bi-dash-circle text-secondary"></i> None
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="small text-muted">{{ exp.recorded_by|default:'—' }}</td>
+
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'expenditures:expenditure_update' exp.pk %}"
+                                   class="btn btn-outline-secondary"
+                                   title="Edit"
+                                   id="btn-edit-exp-{{ exp.pk }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if request.user.role == 'admin' %}
+                                <a href="{% url 'expenditures:expenditure_delete' exp.pk %}"
+                                   class="btn btn-outline-danger"
+                                   title="Delete"
+                                   id="btn-del-exp-{{ exp.pk }}">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+                <!-- Grand total footer -->
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="4" class="text-end">Filtered Total:</td>
+                        <td class="text-end text-danger">₦{{ grand_total|floatformat:2|intcomma }}</td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-receipt fs-1 d-block mb-3 text-secondary"></i>
+            <h5>No expenditures found</h5>
+            <p class="mb-3">
+                {% if request.GET %}
+                    No records match your current filters.
+                    <a href="{% url 'expenditures:expenditure_list' %}">Clear filters</a>
+                {% else %}
+                    Start by recording the foundation's first expenditure.
+                {% endif %}
+            </p>
+            <a href="{% url 'expenditures:expenditure_create' %}" class="btn btn-kb-primary">
+                <i class="bi bi-plus-circle me-1"></i>Record Expenditure
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if expenditures %}
+    <div class="card-footer text-muted small d-flex justify-content-between">
+        <span>{{ filter.qs.count }} record(s) shown of {{ total_records }} total</span>
+        <span class="fw-semibold text-danger">
+            All-time total: ₦{{ grand_total_all|floatformat:2|intcomma }}
+        </span>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

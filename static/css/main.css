@@ -1,0 +1,156 @@
+/* =============================================================
+   KB Foundation Management System — Global Stylesheet
+   ============================================================= */
+
+/* ---------- CSS Custom Properties (Design Tokens) ---------- */
+:root {
+    --kb-primary:       #1a3d5c;   /* Deep navy blue  */
+    --kb-primary-dark:  #122b42;
+    --kb-accent:        #e8a020;   /* Warm gold        */
+    --kb-accent-light:  #f5c85a;
+    --kb-success:       #198754;
+    --kb-danger:        #dc3545;
+    --kb-light-bg:      #f4f7fb;
+    --kb-card-shadow:   0 2px 12px rgba(0,0,0,.08);
+    --kb-radius:        .75rem;
+    --font-base:        'Inter', system-ui, sans-serif;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    font-family: var(--font-base);
+    background-color: var(--kb-light-bg);
+    color: #2c2c2c;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main { flex: 1; }
+
+/* ---------- Navbar ---------- */
+.bg-kb-primary { background-color: var(--kb-primary) !important; }
+
+.navbar-brand { letter-spacing: 0.3px; }
+
+.navbar .nav-link {
+    font-weight: 500;
+    font-size: .9rem;
+    transition: color .2s;
+}
+.navbar .nav-link:hover,
+.navbar .nav-link.active { color: var(--kb-accent-light) !important; }
+
+/* ---------- Cards ---------- */
+.card {
+    border: none;
+    border-radius: var(--kb-radius);
+    box-shadow: var(--kb-card-shadow);
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+.card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,.12);
+    transform: translateY(-2px);
+}
+
+/* ---------- Stat / KPI Cards (Dashboard) ---------- */
+.kpi-card {
+    border-left: 5px solid var(--kb-accent);
+    background: #fff;
+    border-radius: var(--kb-radius);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--kb-card-shadow);
+    transition: transform .2s;
+}
+.kpi-card:hover { transform: translateY(-3px); }
+.kpi-card .kpi-icon {
+    font-size: 2.4rem;
+    opacity: .85;
+}
+.kpi-card .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--kb-primary);
+}
+.kpi-card .kpi-label {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #6c757d;
+}
+
+/* ---------- Buttons ---------- */
+.btn-kb-primary {
+    background-color: var(--kb-primary);
+    color: #fff;
+    border: none;
+}
+.btn-kb-primary:hover {
+    background-color: var(--kb-primary-dark);
+    color: #fff;
+}
+.btn-kb-accent {
+    background-color: var(--kb-accent);
+    color: #fff;
+    border: none;
+}
+.btn-kb-accent:hover {
+    background-color: var(--kb-accent-light);
+    color: #1a1a1a;
+}
+
+/* ---------- Tables ---------- */
+.table thead th {
+    background-color: var(--kb-primary);
+    color: #fff;
+    font-size: .82rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    border: none;
+}
+.table tbody tr { transition: background .15s; }
+.table tbody tr:hover { background-color: rgba(26, 61, 92, .05); }
+
+/* ---------- Forms ---------- */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--kb-primary);
+    box-shadow: 0 0 0 .2rem rgba(26,61,92,.2);
+}
+.form-label { font-weight: 500; font-size: .9rem; }
+
+/* ---------- Badges & Status Pills ---------- */
+.badge-pending    { background-color: #ffc107; color: #000; }
+.badge-under-review { background-color: #0dcaf0; color: #000; }
+.badge-approved   { background-color: #198754; color: #fff; }
+.badge-rejected   { background-color: #dc3545; color: #fff; }
+
+/* ---------- Page Headings ---------- */
+.page-header {
+    border-bottom: 3px solid var(--kb-accent);
+    padding-bottom: .5rem;
+    margin-bottom: 1.5rem;
+    color: var(--kb-primary);
+}
+
+/* ---------- Footer ---------- */
+.footer {
+    font-size: .82rem;
+    letter-spacing: .03em;
+}
+
+/* ---------- Alert overrides ---------- */
+.alert { border-radius: var(--kb-radius); }
+
+/* ---------- Responsive helpers ---------- */
+@media (max-width: 768px) {
+    .kpi-value { font-size: 1.5rem; }
+}

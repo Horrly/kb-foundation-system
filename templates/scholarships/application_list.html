@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load scholarship_extras %}
+{% block title %}Scholarship Applications{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0">
+            <i class="bi bi-mortarboard-fill me-2"></i>Scholarship Applications
+        </h2>
+        <p class="text-muted mt-1 mb-0">Review and manage all submitted applications</p>
+    </div>
+</div>
+
+<!-- Status filter tabs -->
+<div class="mb-4">
+    <ul class="nav nav-pills gap-2 flex-wrap">
+        <li class="nav-item">
+            <a class="nav-link {% if not current_status %}active{% endif %} btn-sm"
+               style="{% if not current_status %}background:#1a3d5c;{% endif %}"
+               href="{% url 'scholarships:application_list' %}">
+                All <span class="badge bg-secondary ms-1">{{ applications.count }}</span>
+            </a>
+        </li>
+        {% for val, label in status_choices %}
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == val %}active{% endif %} btn-sm"
+               style="{% if current_status == val %}background:#1a3d5c;{% endif %}"
+               href="?status={{ val }}">
+                {{ label }}
+                <span class="badge bg-secondary ms-1">{{ counts|get_item:val|default:0 }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if applications %}
+        <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+            <table class="table table-hover align-middle mb-0" id="applications-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Applicant</th>
+                        <th>Institution</th>
+                        <th>Session</th>
+                        <th>CGPA</th>
+                        <th>Docs</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr id="app-row-{{ app.pk }}">
+                        <td class="small text-muted">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-medium">
+                                {{ app.applicant.get_full_name|default:app.applicant.username }}
+                            </div>
+                            <div class="small text-muted">{{ app.applicant.email }}</div>
+                        </td>
+                        <td class="small">{{ app.institution }}</td>
+                        <td class="small">{{ app.academic_session }}</td>
+                        <td class="small">{{ app.current_cgpa }}</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill" style="background:#1a3d5c;">
+                                {{ app.documents.count }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {% if app.status == 'pending' %}bg-warning text-dark{% elif app.status == 'under_review' %}bg-info text-dark{% elif app.status == 'approved' %}bg-success{% elif app.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ app.get_status_display }}</span>
+                        </td>
+                        <td class="small">{{ app.application_date|date:"d M Y" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'scholarships:application_detail_staff' app.pk %}"
+                               class="btn btn-sm btn-outline-primary"
+                               id="btn-view-app-{{ app.pk }}"
+                               title="Review this application">
+                                <i class="bi bi-eye me-1"></i>Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+            <h5>No applications found</h5>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-footer small text-muted">
+        {{ applications.count }} application(s) shown
+    </div>
+</div>
+{% endblock %}
