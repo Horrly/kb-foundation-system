@@ -140,8 +140,18 @@ def logout_view(request):
     """POST-only logout (CSRF-protected via form in base.html)."""
     next_url = request.POST.get('next') or request.GET.get('next')
     if request.method == 'POST':
+        user_role = getattr(request.user, 'role', None)
         logout(request)
         messages.info(request, 'You have been logged out successfully.')
+        
+        if next_url:
+            return redirect(next_url)
+            
+        if user_role in ['donor', 'member', 'reviewer']:
+            return redirect('accounts:portal_login')
+        else:
+            return redirect('accounts:login')
+            
     if next_url:
         return redirect(next_url)
     return redirect('accounts:login')
@@ -164,7 +174,8 @@ def register_view(request):
     if request.method == 'POST':
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            user.backend = 'accounts.backends.EmailOrUniqueIdModelBackend'
+            login(request, user, backend='accounts.backends.EmailOrUniqueIdModelBackend')
 
             # Phase 2: Dispatch welcome email
             login_url = request.build_absolute_uri(reverse('accounts:login'))

@@ -177,12 +177,12 @@ class DonationVerifyForm(forms.Form):
     """
 
     ACTION_APPROVE = 'approve'
-    ACTION_REJECT  = 'reject'
+    ACTION_NOT_CONFIRMED  = 'not_confirmed'
 
     action = forms.ChoiceField(
         choices=[
-            (ACTION_APPROVE, 'Approve'),
-            (ACTION_REJECT,  'Reject'),
+            (ACTION_APPROVE, 'Confirm'),
+            (ACTION_NOT_CONFIRMED,  'Not Confirmed'),
         ],
         widget=forms.HiddenInput(),
     )
@@ -202,15 +202,15 @@ class DonationVerifyForm(forms.Form):
         help_text='Enter the exact amount that hit the bank account.',
     )
 
-    admin_notes = forms.CharField(
+    admin_note = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
             'class':       'form-control',
             'rows':        2,
-            'placeholder': 'Explain why this donation is being rejected...',
-            'id':          'id_verify_admin_notes',
+            'placeholder': 'Explain why this donation is not confirmed...',
+            'id':          'id_verify_admin_note',
         }),
-        label='Rejection Reason',
+        label='Reason Not Confirmed',
         help_text='This message will be sent to the donor via email.',
     )
 
@@ -231,12 +231,12 @@ class DonationVerifyForm(forms.Form):
                     'Confirmed amount must be greater than zero.'
                 )
 
-        elif action == self.ACTION_REJECT:
-            notes = cleaned.get('admin_notes', '').strip()
+        elif action == self.ACTION_NOT_CONFIRMED:
+            notes = cleaned.get('admin_note', '').strip()
             if not notes:
                 self.add_error(
-                    'admin_notes',
-                    'Please provide a rejection reason — it will be emailed to the donor.'
+                    'admin_note',
+                    'Please provide a reason — it will be emailed to the donor.'
                 )
 
         return cleaned

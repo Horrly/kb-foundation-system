@@ -53,10 +53,14 @@ def document_upload_path(instance, filename):
 class ScholarshipApplication(models.Model):
 
     class Status(models.TextChoices):
-        PENDING      = 'pending',      'Pending'
-        UNDER_REVIEW = 'under_review', 'Under Review'
-        APPROVED     = 'approved',     'Approved'
-        REJECTED     = 'rejected',     'Rejected'
+        PENDING          = 'pending',          'Pending'
+        IN_REVIEW        = 'in_review',        'In Review'
+        RECOMMENDED      = 'recommended',      'Recommended'
+        ACCEPTED         = 'accepted',         'Accepted'
+        SCREENING_PASSED = 'screening_passed', 'Screening Passed'
+        AWARDED          = 'awarded',          'Awarded'
+        DISBURSED        = 'disbursed',        'Disbursed'
+        REJECTED         = 'rejected',         'Rejected'
 
     # Core FK — CASCADE so deleting the user removes their application
     applicant = models.ForeignKey(
@@ -96,6 +100,32 @@ class ScholarshipApplication(models.Model):
         help_text='Explain why you need this scholarship and your academic goals.',
     )
 
+    # Phase 41: New explicit document fields
+    school_letter = models.FileField(
+        upload_to='scholarship_docs/school_letters/',
+        blank=True, null=True,
+        validators=[validate_document_file],
+        verbose_name='Official School Letter'
+    )
+    birth_certificate = models.FileField(
+        upload_to='scholarship_docs/birth_certs/',
+        blank=True, null=True,
+        validators=[validate_document_file],
+        verbose_name='Birth Certificate'
+    )
+    passport_photo = models.ImageField(
+        upload_to='scholarship_docs/passports/',
+        blank=True, null=True,
+        verbose_name='Passport Photograph'
+    )
+
+    # Phase 45: Scholar Bank Details Module
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    account_number = models.CharField(max_length=20, blank=True, null=True)
+    account_name = models.CharField(max_length=150, blank=True, null=True)
+    disbursement_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    is_disbursed = models.BooleanField(default=False)
+
     # Workflow
     status        = models.CharField(
         max_length=20,
@@ -108,6 +138,22 @@ class ScholarshipApplication(models.Model):
         blank=True,
         verbose_name='Reviewer Notes',
         help_text='Internal notes from the reviewer. Not shown to applicant.',
+    )
+    is_submitted = models.BooleanField(
+        default=False,
+        verbose_name='Final Submission Locked'
+    )
+    
+    # Phase 42: Two-Tier Review System
+    member_recommendation = models.CharField(
+        max_length=50,
+        choices=[
+            ('Pending', 'Pending'),
+            ('Recommended', 'Recommended'),
+            ('Not Recommended', 'Not Recommended')
+        ],
+        default='Pending',
+        verbose_name='Member Recommendation'
     )
 
     # Timestamps
@@ -126,8 +172,9 @@ class ScholarshipApplication(models.Model):
         """Returns a CSS class string for the status badge."""
         return {
             self.Status.PENDING:      'badge-pending',
-            self.Status.UNDER_REVIEW: 'badge-under-review',
-            self.Status.APPROVED:     'badge-approved',
+            self.Status.IN_REVIEW:    'badge-under-review',
+            self.Status.RECOMMENDED:  'badge-info',
+            self.Status.ACCEPTED:     'badge-approved',
             self.Status.REJECTED:     'badge-rejected',
         }.get(self.status, 'bg-secondary')
 

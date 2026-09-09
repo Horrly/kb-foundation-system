@@ -9,6 +9,7 @@ urlpatterns = [
 
     # Role-specific dashboards
     path('dashboard/admin/',     views.admin_dashboard,     name='admin_dashboard'),
+    path('dashboard/admin/members/', views.admin_member_list, name='admin_member_list'),
     path('dashboard/member/',    views.member_dashboard,    name='member_dashboard'),
     path('dashboard/reviewer/',  views.reviewer_dashboard,  name='reviewer_dashboard'),
     path('dashboard/applicant/', views.applicant_dashboard, name='applicant_dashboard'),
@@ -16,4 +17,8 @@ urlpatterns = [
 
     # Summary Report (Admin + Member)
     path('summary/',             views.summary_report,      name='summary_report'),
+    
+    # Export CSV
+    path('export/applicants/',   views.export_accepted_applicants_csv, name='export_applicants'),
+    path('export/donors/',       views.export_confirmed_donors_csv,    name='export_donors'),
 ]

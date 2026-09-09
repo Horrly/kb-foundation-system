@@ -347,26 +347,33 @@ def verify_donation(request, pk):
             # Resolve Donor's portal user account (for email dispatch)
             donor_user = getattr(donation.donor, 'user', None)
 
+            from django.core.mail import send_mail
+            from django.conf import settings
+            from core.models import Notification
+            from accounts.models import CustomUser
+
             if action == DonationVerifyForm.ACTION_APPROVE:
                 donation.status           = Donation.Status.CONFIRMED
                 donation.amount_confirmed = form.cleaned_data['amount_confirmed']
                 donation.reviewed_at      = now
                 donation.save(update_fields=['status', 'amount_confirmed', 'reviewed_at'])
 
-                send_donation_confirmed_email(donation, donor_user)
-
-                from core.models import Notification
-                from accounts.models import CustomUser
-
-                # Note text
-                admin_note_txt = f" Note: {donation.admin_notes}" if donation.admin_notes else ""
+                admin_note_txt = f" Note: {donation.admin_note}" if donation.admin_note else ""
                 confirmed_msg = f"Donation of ₦{donation.amount_confirmed:,.2f} from {donation.donor.full_name} was Confirmed.{admin_note_txt}"
 
                 # Notify Donor (if user account exists)
                 if donor_user:
                     Notification.objects.create(
                         user=donor_user,
-                        message=f"Your donation of ₦{donation.amount_confirmed:,.2f} was Confirmed.{admin_note_txt}"
+                        message=f"Your donation of ₦{donation.amount_confirmed:,.2f} has been confirmed. Thank you!"
+                    )
+                    # Send direct email
+                    send_mail(
+                        subject="[KB Foundation] Donation Confirmed",
+                        message=f"Dear {donation.donor.full_name},\n\nThank you for your generous donation of ₦{donation.amount_confirmed:,.2f}. It has been successfully confirmed.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[donation.donor.email],
+                        fail_silently=True,
                     )
 
                 # Notify all Members
@@ -385,26 +392,28 @@ def verify_donation(request, pk):
                     f'Email and system notifications sent.'
                 )
 
-            elif action == DonationVerifyForm.ACTION_REJECT:
-                donation.status      = Donation.Status.REJECTED
-                donation.admin_notes = form.cleaned_data['admin_notes']
+            elif action == DonationVerifyForm.ACTION_NOT_CONFIRMED:
+                donation.status      = Donation.Status.NOT_CONFIRMED
+                donation.admin_note  = form.cleaned_data['admin_note']
                 donation.reviewed_at = now
-                donation.save(update_fields=['status', 'admin_notes', 'reviewed_at'])
+                donation.save(update_fields=['status', 'admin_note', 'reviewed_at'])
 
-                send_donation_rejected_email(donation, donor_user)
-
-                from core.models import Notification
-                from accounts.models import CustomUser
-
-                rejection_reason = donation.admin_notes or "No note provided"
-                rejected_donor_msg = f"Donation of ₦{donation.amount:,.2f} was Rejected. Note: {rejection_reason}"
-                rejected_member_msg = f"Donation of ₦{donation.amount:,.2f} from {donation.donor.full_name} was Rejected. Note: {rejection_reason}"
+                rejection_reason = donation.admin_note or "No reason provided"
+                rejected_member_msg = f"Donation of ₦{donation.amount:,.2f} from {donation.donor.full_name} was Not Confirmed. Reason: {rejection_reason}"
 
                 # Notify Donor
                 if donor_user:
                     Notification.objects.create(
                         user=donor_user,
-                        message=rejected_donor_msg
+                        message=f"Your donation of ₦{donation.amount:,.2f} was not confirmed. Please check your email for details."
+                    )
+                    # Send direct email
+                    send_mail(
+                        subject="[KB Foundation] Donation Not Confirmed",
+                        message=f"Dear {donation.donor.full_name},\n\nYour recent donation could not be confirmed at this time.\n\nReason: {rejection_reason}\n\nPlease contact support or try uploading your receipt again.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[donation.donor.email],
+                        fail_silently=True,
                     )
 
                 # Notify all Members
@@ -416,8 +425,8 @@ def verify_donation(request, pk):
 
                 messages.warning(
                     request,
-                    f'Donation from <strong>{donation.donor.full_name}</strong> has been '
-                    f'<span class="text-danger">rejected</span>. '
+                    f'Donation from <strong>{donation.donor.full_name}</strong> was marked as '
+                    f'<span class="text-warning">Not Confirmed</span>. '
                     f'The donor and members have been notified.'
                 )
 
@@ -430,4 +439,28 @@ def verify_donation(request, pk):
         'page_title': f'Verify Donation — {donation.donor.full_name}',
         'donation':   donation,
         'form':       form,
+    })
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+#  PHASE 46: DONOR RECEIPT PRINT
+# ════════════════════════════════════════════════════════════════════════════════
+
+@login_required
+def donor_receipt_view(request, donation_id):
+    """
+    Render a clean, professional PDF-ready tax receipt template.
+    Accessible by the donor who made it or any admin/member.
+    """
+    donation = get_object_or_404(Donation.objects.select_related('donor'), pk=donation_id, status=Donation.Status.CONFIRMED)
+    
+    # Security: Ensure only the owning donor or an admin can view it.
+    if request.user.role == 'donor':
+        donor_profile = getattr(request.user, 'donor_profile', None)
+        if donation.donor != donor_profile:
+            messages.error(request, 'Unauthorized access to this receipt.')
+            return redirect('reports:donor_dashboard')
+            
+    return render(request, 'donors/receipt_print.html', {
+        'donation': donation,
     })

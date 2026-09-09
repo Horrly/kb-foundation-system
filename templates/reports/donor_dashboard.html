@@ -27,11 +27,11 @@
     /* Status badges */
     .badge-status-pending   { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
     .badge-status-confirmed { background: #d1e7dd; color: #0a3622; border: 1px solid #198754; }
-    .badge-status-rejected  { background: #f8d7da; color: #842029; border: 1px solid #dc3545; }
+    .badge-status-not_confirmed  { background: #f8d7da; color: #842029; border: 1px solid #dc3545; }
 
     .donation-row-pending   { border-left: 3px solid #ffc107; }
     .donation-row-confirmed { border-left: 3px solid #198754; }
-    .donation-row-rejected  { border-left: 3px solid #dc3545; opacity: .85; }
+    .donation-row-not_confirmed  { border-left: 3px solid #dc3545; opacity: .85; }
 
     .no-profile-card {
         border: 2px dashed #dee2e6; border-radius: 1rem;
@@ -41,6 +41,8 @@
 {% endblock %}
 
 {% block content %}
+<div class="container py-5">
+
 
 <!-- ── Hero header ────────────────────────────────────────────────────────── -->
 <div class="donor-hero">
@@ -52,7 +54,7 @@
                     <i class="bi bi-heart-fill text-warning fs-4"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold mb-0">
+                    <h4 class="fw-bold mb-0" style="color: #ffffff !important; font-weight: 700;">
                         {{ donor_profile.full_name|default:request.user.get_full_name }}
                     </h4>
                     <div class="small" style="opacity:.75;">
@@ -72,22 +74,22 @@
                         <div class="lbl">Total Confirmed</div>
                     </div>
                 </div>
-                <div class="col-4">
+                <div class="col-6">
                     <div class="donor-kpi">
                         <div class="num kpi-green">{{ confirmed_count }}</div>
                         <div class="lbl">Confirmed</div>
                     </div>
                 </div>
-                <div class="col-4">
+                <div class="col-6">
                     <div class="donor-kpi">
                         <div class="num kpi-yellow">{{ pending_count }}</div>
                         <div class="lbl">Pending</div>
                     </div>
                 </div>
-                <div class="col-4">
+                <div class="col-6">
                     <div class="donor-kpi">
-                        <div class="num kpi-red">{{ rejected_count }}</div>
-                        <div class="lbl">Rejected</div>
+                        <div class="num kpi-red">{{ not_confirmed_count }}</div>
+                        <div class="lbl">Not Confirmed</div>
                     </div>
                 </div>
             </div>
@@ -138,7 +140,7 @@
         </div>
 
         <!-- Profile Card -->
-        <div class="card shadow-sm" style="border-radius:1rem;">
+        <div class="card shadow-sm border-0 mb-4" style="border-radius:1rem;">
             <div class="card-header fw-semibold" style="background:#f8f9fa;">
                 <i class="bi bi-person-circle me-2 text-primary"></i>My Profile
             </div>
@@ -174,7 +176,7 @@
 
     <!-- ── Right: Donation history table ───────────────────────────────────── -->
     <div class="col-lg-8">
-        <div class="card shadow-sm" style="border-radius:1rem;overflow:hidden;">
+        <div class="card shadow-sm h-100 border-0" style="border-radius:1rem;overflow:hidden;">
             <div class="card-header fw-semibold d-flex align-items-center justify-content-between"
                  style="background:#f8f9fa;">
                 <span>
@@ -184,13 +186,13 @@
                 <div class="d-flex gap-1 align-items-center" style="font-size:.72rem;">
                     <span class="badge badge-status-pending">Pending</span>
                     <span class="badge badge-status-confirmed">Confirmed</span>
-                    <span class="badge badge-status-rejected">Rejected</span>
+                    <span class="badge badge-status-not_confirmed">Not Confirmed</span>
                 </div>
             </div>
 
             {% if donations %}
             <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
-                <table class="table table-hover mb-0 align-middle" id="donation-history-table">
+                <div class="card border-0 shadow-sm mb-4"><div class="card-body p-0 table-responsive"><table class="table table-hover mb-0 align-middle" id="donation-history-table">
                     <thead style="background:#fdfdfd;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;">
                         <tr>
                             <th class="ps-3">Date</th>
@@ -198,8 +200,9 @@
                             <th>Method</th>
                             <th>Reference</th>
                             <th class="text-center">Status</th>
-                            <th class="text-center">Receipt</th>
+                            <th class="text-center">Proof Uploaded</th>
                             <th>Confirmed ₦</th>
+                            <th class="text-center">Tax Receipt</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -224,11 +227,11 @@
                                 <span class="badge badge-status-confirmed rounded-pill px-3">
                                     <i class="bi bi-check-circle-fill me-1"></i>Confirmed
                                 </span>
-                                {% elif donation.status == 'rejected' %}
-                                <span class="badge badge-status-rejected rounded-pill px-3"
+                                {% elif donation.status == 'not_confirmed' %}
+                                <span class="badge badge-status-not_confirmed rounded-pill px-3"
                                       data-bs-toggle="tooltip"
                                       title="{{ donation.admin_notes|default:'Contact Admin for details.' }}">
-                                    <i class="bi bi-x-circle-fill me-1"></i>Rejected
+                                    <i class="bi bi-x-circle-fill me-1"></i>Not Confirmed
                                 </span>
                                 {% endif %}
                             </td>
@@ -249,25 +252,36 @@
                                 <span class="fw-semibold text-success">
                                     ₦{{ donation.amount_confirmed|default:donation.amount|floatformat:2|intcomma }}
                                 </span>
-                                {% elif donation.status == 'rejected' %}
+                                {% elif donation.status == 'not_confirmed' %}
                                 <span class="text-muted small">—</span>
                                 {% else %}
                                 <span class="text-muted small fst-italic">Awaiting</span>
                                 {% endif %}
                             </td>
+                            <td class="text-center">
+                                {% if donation.status == 'confirmed' %}
+                                <a href="{% url 'donors:receipt_print' donation.pk %}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-printer"></i> Print Receipt
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         <!-- Rejection reason row (inline, collapsible) -->
-                        {% if donation.status == 'rejected' and donation.admin_notes %}
-                        <tr class="table-danger border-0" style="background:rgba(220,53,69,.05);">
-                            <td colspan="7" class="ps-3 small py-1" style="border-top:none;">
-                                <i class="bi bi-info-circle-fill text-danger me-1"></i>
-                                <strong>Reason:</strong> {{ donation.admin_notes }}
+                        {% if donation.status == 'not_confirmed' and donation.admin_notes %}
+                        <tr class="table-danger" style="border-top:none;">
+                            <td colspan="8" class="pt-0 pb-3 border-0">
+                                <div class="px-3 py-2 ms-4" style="border-left:3px solid #dc3545; background:#fff;">
+                                    <small class="fw-semibold text-danger">Reason for Non-Confirmation:</small>
+                                    <p class="mb-0 small text-muted">{{ donation.admin_notes }}</p>
+                                </div>
                             </td>
                         </tr>
                         {% endif %}
                         {% endfor %}
                     </tbody>
-                </table>
+                </table></div></div>
             </div>
 
             {% else %}
@@ -300,7 +314,7 @@
             </span>
             <span class="small text-muted d-flex align-items-center gap-1">
                 <i class="bi bi-x-circle-fill text-danger"></i>
-                <strong>Rejected</strong> — Could not be verified (hover for reason)
+                <strong>Not Confirmed</strong> — Could not be verified (hover for reason)
             </span>
         </div>
     </div>
@@ -321,6 +335,8 @@
 </div>
 {% endif %}
 
+
+</div>
 {% endblock %}
 
 {% block extra_js %}

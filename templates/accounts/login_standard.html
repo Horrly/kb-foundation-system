@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -198,9 +199,7 @@
             <i class="bi bi-mortarboard-fill"></i>
             Scholarship Portal
         </div>
-        <div class="panel-logo-ring">
-            <i class="bi bi-building-fill-check"></i>
-        </div>
+        <img src="{% static 'images/kb_logo.jpeg' %}" alt="KB Foundation" class="img-fluid d-block mx-auto mb-3" style="max-width: 85px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
         <h2>KB Foundation<br/>Scholarship Portal</h2>
         <p class="tagline">
             Apply for a scholarship, track your application status,
@@ -271,18 +270,17 @@
 
             <!-- Password -->
             <div class="mb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="{{ form.password.id_for_label }}" class="form-label mb-0">
-                        Password
-                    </label>
-                    <a href="#" class="text-decoration-none" style="font-size:.8rem;color:var(--kb-blue);"
-                       tabindex="-1" id="btn-forgot-pw">Forgot password?</a>
-                </div>
-                <div class="pw-wrapper">
+                <label for="{{ form.password.id_for_label }}" class="form-label mb-1">
+                    Password
+                </label>
+                <div class="pw-wrapper mb-1">
                     {{ form.password }}
                     <button type="button" class="pw-toggle" id="togglePassword" aria-label="Show/hide password">
                         <i class="bi bi-eye" id="pwIcon"></i>
                     </button>
+                </div>
+                <div class="clearfix">
+                    <a href="{% url 'password_reset' %}" class="float-end text-decoration-none small" style="color: var(--kb-accent);">Forgot Password?</a>
                 </div>
                 {% if form.password.errors %}
                     <ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -317,7 +315,7 @@
             <i class="bi bi-key-fill me-1 text-warning"></i>
             Donor or Member?
             <a href="{% url 'accounts:portal_login' %}" id="btn-switch-portal">
-                Sign in to the Staff Portal &rarr;
+                Sign in to the Donor/Member Portal &rarr;
             </a>
         </div>
 

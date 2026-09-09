@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .net-balance-card {
+        background: linear-gradient(135deg, #1a3d5c 0%, #0d2538 100%);
+        color: #fff; border-radius: var(--kb-radius);
+        padding: 1.5rem 2rem; position: relative; overflow: hidden;
+    }
+    .net-balance-card::after {
+        content: '₦'; position: absolute; right: 1.5rem; top: 50%;
+        transform: translateY(-50%); font-size: 6rem; opacity: .06;
+        font-weight: 900;
+    }
+    .net-balance-card .balance-label { font-size:.8rem; text-transform:uppercase;
+        letter-spacing:.1em; opacity:.75; }
+    .net-balance-card .balance-value { font-size:2.4rem; font-weight:800; }
+    .quick-action-card {
+        text-decoration:none; color:inherit;
+        border:1px dashed #dee2e6; border-radius:var(--kb-radius);
+        padding:1.25rem 1rem; text-align:center;
+        transition: all .2s; display:block;
+        background:#fff;
+    }
+    .quick-action-card:hover {
+        border-color:var(--kb-accent); background:#fffbf0;
+        transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1);
+    }
+    .quick-action-card i { font-size:1.8rem; }
+    .status-bar { height:8px; border-radius:4px; overflow:hidden; background:#e9ecef; }
+    .status-bar-fill { height:100%; border-radius:4px; transition:width .6s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="page-header mb-0">
+            <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+        </h2>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'reports:summary_report' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-bar-graph me-1"></i>Summary Report
+        </a>
+        <a href="{% url 'admin:index' %}" class="btn btn-kb-primary">
+            <i class="bi bi-gear me-1"></i>Admin Panel
+        </a>
+    </div>
+</div>
+
+<!-- ── Net Balance Hero Card ── -->
+<div class="net-balance-card mb-4 shadow">
+    <div class="balance-label">Net Foundation Balance</div>
+    <div class="balance-value {% if net_balance < 0 %}text-danger{% endif %}">
+        ₦{{ net_balance|floatformat:2|intcomma }}
+    </div>
+    <div class="mt-2 d-flex gap-4 flex-wrap" style="font-size:.82rem;opacity:.85;">
+        <span><i class="bi bi-arrow-up-circle me-1 text-success"></i>Received: ₦{{ total_donations|floatformat:0|intcomma }}</span>
+        <span><i class="bi bi-arrow-down-circle me-1 text-danger"></i>Spent: ₦{{ total_expenditures|floatformat:0|intcomma }}</span>
+        <span><i class="bi bi-award me-1 text-warning"></i>Awarded: ₦{{ total_awarded|floatformat:0|intcomma }}</span>
+    </div>
+</div>
+
+<!-- ── KPI Cards Row ── -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-primary"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_donors }}</div>
+                <div class="kpi-label">Donors</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-success"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.3rem;">₦{{ total_donations|floatformat:0|intcomma }}</div>
+                <div class="kpi-label">Donations</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-danger"><i class="bi bi-cash-stack"></i></div>
+            <div>
+                <div class="kpi-value" style="font-size:1.3rem;">₦{{ total_expenditures|floatformat:0|intcomma }}</div>
+                <div class="kpi-label">Expenditures</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-warning"><i class="bi bi-mortarboard-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_apps }}</div>
+                <div class="kpi-label">Applications</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-success"><i class="bi bi-award-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ recipients }}</div>
+                <div class="kpi-label">Recipients</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon text-secondary"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+                <div class="kpi-value">{{ pending }}</div>
+                <div class="kpi-label">Pending Review</div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phase 39 Visualizations -->
+<div class="row mb-4">
+    <!-- Column 1: Expense Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-pie-chart-fill me-2" style="color:var(--kb-primary);"></i>Expenses by Category
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center">
+                <canvas id="expenseChart" style="max-height: 300px; width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: Top Donors Leaderboard -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="background:#f8f9fa;">
+                <div>
+                    <i class="bi bi-trophy-fill me-2 text-warning"></i>Top Donors Leaderboard
+                </div>
+                <a href="{% url 'reports:export_donors' %}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Donor Name</th>
+                                <th class="text-end">Total Donated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donor in top_donors %}
+                            <tr>
+                                <td class="fw-bold text-muted">{{ forloop.counter }}</td>
+                                <td class="fw-medium">{{ donor.donor__full_name }}</td>
+                                <td class="text-end fw-bold text-success">₦{{ donor.total_amount|floatformat:2|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">No confirmed donations yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── Left: Scholarship Pipeline + Quick Actions ── -->
+    <div class="col-lg-5">
+
+        <!-- Scholarship Pipeline -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-funnel-fill me-2" style="color:#e8a020;"></i>
+                Application Pipeline
+            </div>
+            <div class="card-body">
+                {% if total_apps > 0 %}
+                {% with pct_pending=pending|floatformat:0 %}
+
+                <!-- Pending -->
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-medium">
+                        <span class="badge badge-pending me-1">Pending</span>
+                    </span>
+                    <span class="small fw-bold">{{ pending }}</span>
+                </div>
+                <div class="status-bar mb-3">
+                    {% if total_apps > 0 %}
+                    <div class="status-bar-fill bg-warning" style="width:{% widthratio pending total_apps 100 %}%"></div>
+                    {% endif %}
+                </div>
+
+                <!-- Under Review -->
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small fw-medium"><span class="badge badge-under-review me-1">Under Review</span></span>
+                    <span class="small fw-bold">{{ under_review }}</span>
+                </div>
+                <div class="status-bar mb-3">
+                    <div class="status-bar-fill bg-info" style="width:{% widthratio under_review total_apps 100 %}%"></div>
+                </div>
+
+                <!-- Approved -->
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small fw-medium"><span class="badge badge-approved me-1">Approved</span></span>
+                    <span class="small fw-bold">{{ approved }}</span>
+                </div>
+                <div class="status-bar mb-3">
+                    <div class="status-bar-fill bg-success" style="width:{% widthratio approved total_apps 100 %}%"></div>
+                </div>
+
+                <!-- Rejected -->
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small fw-medium"><span class="badge badge-rejected me-1">Rejected</span></span>
+                    <span class="small fw-bold">{{ rejected }}</span>
+                </div>
+                <div class="status-bar mb-0">
+                    <div class="status-bar-fill bg-danger" style="width:{% widthratio rejected total_apps 100 %}%"></div>
+                </div>
+                {% endwith %}
+                {% else %}
+                <p class="text-muted small text-center py-2">No applications yet.</p>
+                {% endif %}
+            </div>
+            <div class="card-footer small d-flex justify-content-between">
+                <span>{{ total_apps }} total application(s)</span>
+                <a href="{% url 'scholarships:application_list' %}" class="text-decoration-none" style="color:var(--kb-primary);">
+                    View All →
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-lightning-fill me-2 text-warning"></i>Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+
+                    {# ── Admin-only actions ─────────────────────────────── #}
+                    {% if request.user.role == 'admin' or request.user.is_superuser %}
+                    <div class="col-6">
+                        <a href="{% url 'accounts:admin_register_member' %}" class="quick-action-card" id="qa-register-member">
+                            <i class="bi bi-person-badge-fill text-primary d-block mb-1"></i>
+                            <div class="small fw-medium">Register Member</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'accounts:admin_register_donor' %}" class="quick-action-card" id="qa-register-donor">
+                            <i class="bi bi-heart-fill text-success d-block mb-1"></i>
+                            <div class="small fw-medium">Register Donor</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'donors:donation_create' %}" class="quick-action-card" id="qa-record-donation">
+                            <i class="bi bi-cash-coin text-success d-block mb-1"></i>
+                            <div class="small fw-medium">Record Donation</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'expenditures:expenditure_create' %}" class="quick-action-card" id="qa-add-exp">
+                            <i class="bi bi-receipt-cutoff text-danger d-block mb-1"></i>
+                            <div class="small fw-medium">Add Expenditure</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'admin:index' %}" class="quick-action-card" id="qa-admin">
+                            <i class="bi bi-gear-fill" style="color:#1a3d5c;"></i>
+                            <div class="small fw-medium d-block mt-1">Admin Panel</div>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {# ── Shared read-only actions (Admin + Member) ──────── #}
+                    <div class="col-6">
+                        <a href="{% url 'donors:pending_donations' %}" class="quick-action-card" id="qa-pending-donations">
+                            <i class="bi bi-hourglass-split text-warning d-block mb-1"></i>
+                            <div class="small fw-medium">Pending Donations</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'scholarships:application_list' %}" class="quick-action-card" id="qa-review-apps">
+                            <i class="bi bi-clipboard2-check text-warning d-block mb-1"></i>
+                            <div class="small fw-medium">Review Apps</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'reports:summary_report' %}" class="quick-action-card" id="qa-report">
+                            <i class="bi bi-bar-chart-fill text-secondary d-block mb-1"></i>
+                            <div class="small fw-medium">Summary Report</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applicant Reports -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header fw-semibold" style="background:#f8f9fa;">
+                <i class="bi bi-file-earmark-bar-graph-fill me-2 text-primary"></i>Applicant Reports
+            </div>
+            <div class="card-body">
+                <a href="{% url 'reports:export_applicants' %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Export Accepted Applicants (Excel)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right: Recent Activity ── -->
+    <div class="col-lg-7">
+
+        <!-- Recent Donations -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold d-flex justify-content-between" style="background:#f8f9fa;">
+                <span><i class="bi bi-cash-coin me-2 text-success"></i>Recent Donations</span>
+                <a href="{% url 'donors:donation_list' %}" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_donations %}
+                <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr><th>Donor</th><th>Date</th><th class="text-end">Amount</th><th>Method</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for d in recent_donations %}
+                            <tr>
+                                <td><a href="{% url 'donors:donor_detail' d.donor.pk %}" class="text-decoration-none fw-medium">{{ d.donor.full_name }}</a></td>
+                                <td class="text-muted">{{ d.date|date:"d M Y" }}</td>
+                                <td class="text-end fw-bold text-success">₦{{ d.amount|floatformat:2|intcomma }}</td>
+                                <td><span class="badge text-bg-light text-dark border">{{ d.get_payment_method_display }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3 small">No donations recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Applications -->
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold d-flex justify-content-between" style="background:#f8f9fa;">
+                <span><i class="bi bi-mortarboard-fill me-2 text-warning"></i>Recent Applications</span>
+                <a href="{% url 'scholarships:application_list' %}" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_apps %}
+                <div class="table-responsive border-0 shadow-sm rounded-3 bg-white">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr><th>Applicant</th><th>Session</th><th>CGPA</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            {% for app in recent_apps %}
+                            <tr>
+                                <td class="fw-medium">{{ app.applicant.get_full_name|default:app.applicant.username }}</td>
+                                <td class="text-muted">{{ app.academic_session }}</td>
+                                <td>{{ app.current_cgpa }}</td>
+                                <td>
+                                    <span class="badge rounded-pill {% if app.status == 'pending' %}bg-warning text-dark{% elif app.status == 'under_review' %}bg-info text-dark{% elif app.status == 'approved' %}bg-success{% elif app.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ app.get_status_display }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'scholarships:application_detail_staff' app.pk %}"
+                                       class="btn btn-link btn-sm p-0">Review →</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3 small">No applications yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var ctx = document.getElementById('expenseChart').getContext('2d');
+    
+    // Fallback safely if there are no expenses yet
+    var expenseLabels = [];
+    var expenseAmounts = [];
+    try {
+        expenseLabels = JSON.parse('{{ expense_labels|safe|escapejs }}');
+        expenseAmounts = JSON.parse('{{ expense_amounts|safe|escapejs }}');
+    } catch (e) {
+        console.error("Error parsing expense data", e);
+    }
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: expenseLabels,
+            datasets: [{
+                data: expenseAmounts,
+                backgroundColor: [
+                    '#1a3d5c', /* Deep Navy */
+                    '#d32f2f', /* KB Red */
+                    '#28a745', /* KB Green */
+                    '#e8a020', /* KB Gold */
+                    '#6f42c1', 
+                    '#17a2b8'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -54,15 +54,23 @@
         </div>
     </div>
 
-    <!-- Current Status Badge -->
-    <span class="status-pill badge-{{ application.status }}">
-        {% if application.status == 'pending'      %}<i class="bi bi-hourglass-split me-1"></i>
-        {% elif application.status == 'under_review'%}<i class="bi bi-eye-fill me-1"></i>
-        {% elif application.status == 'approved'   %}<i class="bi bi-check-circle-fill me-1"></i>
-        {% elif application.status == 'rejected'   %}<i class="bi bi-x-circle-fill me-1"></i>
+    <!-- Current Status Badges -->
+    <div class="d-flex flex-column align-items-end gap-1">
+        <span class="status-pill badge-{{ application.status }}">
+            {% if application.status == 'pending'      %}<i class="bi bi-hourglass-split me-1"></i>
+            {% elif application.status == 'in_review'  %}<i class="bi bi-eye-fill me-1"></i>
+            {% elif application.status == 'recommended'%}<i class="bi bi-star-fill me-1"></i>
+            {% elif application.status == 'accepted'   %}<i class="bi bi-check-circle-fill me-1"></i>
+            {% elif application.status == 'rejected'   %}<i class="bi bi-x-circle-fill me-1"></i>
+            {% endif %}
+            {{ application.get_status_display }}
+        </span>
+        {% if application.member_recommendation != 'Pending' %}
+        <span class="badge {% if application.member_recommendation == 'Recommended' %}bg-info{% else %}bg-warning text-dark{% endif %}">
+            Member: {{ application.member_recommendation }}
+        </span>
         {% endif %}
-        {{ application.get_status_display }}
-    </span>
+    </div>
 </div>
 
 <div class="row g-4">
@@ -111,11 +119,48 @@
             <div class="card-header fw-semibold" style="background:#f8f9fa;">
                 <i class="bi bi-paperclip me-2 text-success"></i>
                 Uploaded Documents
-                <span class="badge rounded-pill ms-1" style="background:#1a3d5c;">{{ documents|length }}</span>
             </div>
             <div class="card-body">
-                {% if documents %}
                 <div class="d-flex flex-column gap-2">
+                    <!-- Phase 41/42 Specific Documents -->
+                    {% if application.school_letter %}
+                    <div class="doc-item d-flex align-items-center gap-3">
+                        <i class="bi bi-file-earmark-text-fill text-primary fs-4"></i>
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold">Official School Letter</div>
+                        </div>
+                        <a href="{{ application.school_letter.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download me-1"></i>Download
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.birth_certificate %}
+                    <div class="doc-item d-flex align-items-center gap-3">
+                        <i class="bi bi-file-earmark-person-fill text-warning fs-4"></i>
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold">Birth Certificate</div>
+                        </div>
+                        <a href="{{ application.birth_certificate.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download me-1"></i>Download
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.passport_photo %}
+                    <div class="doc-item d-flex align-items-center gap-3">
+                        <i class="bi bi-image-fill text-info fs-4"></i>
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold">Passport Photograph</div>
+                        </div>
+                        <a href="{{ application.passport_photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                    </div>
+                    {% endif %}
+                
+                    {% if documents %}
+                    <hr class="my-2">
                     {% for doc in documents %}
                     <div class="doc-item d-flex align-items-center gap-3" id="doc-{{ doc.pk }}">
                         {% if doc.is_image %}
@@ -137,13 +182,15 @@
                         </a>
                     </div>
                     {% endfor %}
+                    {% endif %}
+                    
+                    {% if not documents and not application.school_letter and not application.birth_certificate and not application.passport_photo %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-folder-x fs-2 d-block mb-2 text-secondary"></i>
+                        No documents uploaded yet.
+                    </div>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="text-center text-muted py-3">
-                    <i class="bi bi-folder-x fs-2 d-block mb-2 text-secondary"></i>
-                    No documents uploaded yet.
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -163,102 +210,66 @@
                 {% endif %}
             </div>
             <div class="card-body">
-
                 {% if request.user.role == 'admin' or request.user.is_superuser %}
-                {# ── Admins: full review form ──────────────────────────────── #}
-                <form method="post"
-                      action="{% url 'scholarships:application_review' application.pk %}"
-                      id="review-form">
-                    {% csrf_token %}
+                {# ── Admins: final approval buttons ──────────────────────── #}
 
-                    <!-- Status selector -->
-                    <div class="mb-3">
-                        <label for="{{ review_form.status.id_for_label }}" class="form-label fw-medium">
-                            Status <span class="text-danger">*</span>
-                        </label>
-                        {{ review_form.status }}
-                        {% if review_form.status.errors %}
-                        <div class="text-danger small mt-1">{{ review_form.status.errors|join:", " }}</div>
-                        {% endif %}
+                <div class="mb-4">
+                    <p class="small text-muted mb-3">Admin Final Decision:</p>
+                    {% if application.status != 'accepted' and application.status != 'rejected' %}
+                    <form method="post" action="{% url 'scholarships:admin_decision' application.pk %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <button type="submit" name="decision" value="Accept" class="btn btn-success flex-grow-1 fw-bold">
+                            <i class="bi bi-check-circle me-1"></i>Accept
+                        </button>
+                        <button type="submit" name="decision" value="Reject" class="btn btn-danger flex-grow-1 fw-bold" onclick="return confirm('Are you sure you want to REJECT this application?');">
+                            <i class="bi bi-x-circle me-1"></i>Reject
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="text-center">
+                        <span class="badge bg-secondary fs-6 py-2 px-3">Decision Logged: {{ application.get_status_display }}</span>
                     </div>
-
-                    <!-- Reviewer Notes -->
-                    <div class="mb-3">
-                        <label for="{{ review_form.reviewer_notes.id_for_label }}" class="form-label fw-medium">
-                            Reviewer Notes
-                            <small class="fw-normal text-muted">(internal)</small>
-                        </label>
-                        {{ review_form.reviewer_notes }}
-                        {% if review_form.reviewer_notes.errors %}
-                        <div class="text-danger small mt-1">{{ review_form.reviewer_notes.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-
-                    <button type="submit" class="btn w-100 fw-semibold text-white py-2"
-                            style="background:#1a3d5c; border-radius:.6rem;"
-                            id="btn-submit-review">
-                        <i class="bi bi-save me-2"></i>Save Review Decision
-                    </button>
-                </form>
-
-                {% elif request.user.role == 'reviewer' %}
-                {# ── Reviewers: form limited to under_review ───────────────── #}
-                <form method="post"
-                      action="{% url 'scholarships:application_review' application.pk %}"
-                      id="review-form">
-                    {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label for="{{ review_form.status.id_for_label }}" class="form-label fw-medium">
-                            Status <span class="text-danger">*</span>
-                        </label>
-                        {{ review_form.status }}
-                        <div class="form-text text-warning">
-                            <i class="bi bi-lock-fill me-1"></i>
-                            Reviewers can set to "Under Review" only. Final decisions need Admin.
-                        </div>
-                        {% if review_form.status.errors %}
-                        <div class="text-danger small mt-1">{{ review_form.status.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ review_form.reviewer_notes.id_for_label }}" class="form-label fw-medium">
-                            Reviewer Notes
-                            <small class="fw-normal text-muted">(internal)</small>
-                        </label>
-                        {{ review_form.reviewer_notes }}
-                        {% if review_form.reviewer_notes.errors %}
-                        <div class="text-danger small mt-1">{{ review_form.reviewer_notes.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-
-                    <button type="submit" class="btn w-100 fw-semibold text-white py-2"
-                            style="background:#1a3d5c; border-radius:.6rem;"
-                            id="btn-submit-review">
-                        <i class="bi bi-save me-2"></i>Save Review Note
-                    </button>
-                </form>
-
-                {% else %}
-                {# ── Members: read-only notice ─────────────────────────────── #}
-                <div class="alert alert-secondary mt-2 mb-0 d-flex align-items-start gap-2" role="alert">
-                    <i class="bi bi-lock-fill fs-5 mt-1 text-secondary flex-shrink-0"></i>
-                    <div>
-                        <strong>Read-only access.</strong><br>
-                        <small>As a Member you can view this application in full, but only Administrators can approve, reject, or change the review status.</small>
-                    </div>
+                    {% endif %}
                 </div>
+
+                <hr>
+                {% endif %}
+
+                {% if request.user.role == 'member' or request.user.role == 'admin' or request.user.is_superuser %}
+                {# ── Members: recommend buttons ────────────────────────────── #}
+                <div class="mb-3">
+                    <p class="small text-muted mb-2">Committee Recommendation:</p>
+                    {% if application.member_recommendation != 'Pending' %}
+                    <div class="alert alert-info py-2 small mb-3">
+                        Currently: <strong>{{ application.member_recommendation }}</strong>
+                    </div>
+                    {% endif %}
+                    
+
+                    {% if request.user.role == 'member' %}
+                    {% if application.member_recommendation == 'Pending' and application.status in 'pending,in_review' %}
+                    <form method="post" action="{% url 'scholarships:member_recommend' application.pk %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <button type="submit" name="recommendation" value="Recommended" class="btn btn-outline-success flex-grow-1">
+                            <i class="bi bi-hand-thumbs-up me-1"></i>Recommend
+                        </button>
+                        <button type="submit" name="recommendation" value="Not Recommended" class="btn btn-outline-danger flex-grow-1">
+                            <i class="bi bi-hand-thumbs-down me-1"></i>Not Recommend
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="text-center">
+                        <span class="badge bg-secondary fs-6 py-2 px-3">Decision Logged: {{ application.member_recommendation }}</span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                </div>
+                {% endif %}
+
                 {% if application.reviewer_notes %}
                 <hr/>
-                <div class="section-header">Last Reviewer Note</div>
-                <p class="small text-muted mb-0">{{ application.reviewer_notes }}</p>
-                {% endif %}
-                {% endif %}
-
-                {% if request.user.role != 'member' and application.reviewer_notes %}
-                <hr/>
-                <div class="section-header">Last Reviewer Note</div>
+                <div class="section-header">Reviewer Note</div>
                 <p class="small text-muted mb-0">{{ application.reviewer_notes }}</p>
                 {% endif %}
 

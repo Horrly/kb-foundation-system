@@ -71,7 +71,7 @@
                             </span>
                         </td>
                         <td>
-                            <span class="badge rounded-pill {% if app.status == 'pending' %}bg-warning text-dark{% elif app.status == 'under_review' %}bg-info text-dark{% elif app.status == 'approved' %}bg-success{% elif app.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ app.get_status_display }}</span>
+                            <span class="badge rounded-pill {% if app.status == 'pending' %}bg-warning text-dark{% elif app.status == 'in_review' %}bg-info text-dark{% elif app.status == 'recommended' %}bg-info{% elif app.status == 'accepted' %}bg-success{% elif app.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ app.get_status_display }}</span>
                         </td>
                         <td class="small">{{ app.application_date|date:"d M Y" }}</td>
                         <td class="text-center">

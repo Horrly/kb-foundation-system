@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-100">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,13 +22,10 @@
         rel="stylesheet"
     />
 
-    <!-- Google Fonts: Poppins (primary) — loaded before main.css so it wins -->
+    <!-- Google Fonts: Open Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <!-- Global Styles -->
     {% load static %}
@@ -43,18 +40,20 @@
 
     /* ── Typography ─────────────────────────────────────────────────────── */
     :root {
+        --bs-body-font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+        --bs-body-font-size: 0.9rem; /* Professional compact dashboard scale */
         --kb-primary:     #1a3d5c;
         --kb-gold:        #e8a020;
         --kb-surface:     #f5f7fa;   /* page background */
         --kb-card-bg:     #ffffff;
-        --kb-text:        #1e293b;
+        --kb-text:        #334155;   /* Sleek slate text tone */
         --kb-muted:       #64748b;
         --kb-border:      rgba(0,0,0,.07);
-        --kb-radius-card: 16px;
+        --kb-radius-card: 0.5rem;
         --kb-radius-btn:  10px;
         --kb-radius-inp:  10px;
-        --kb-shadow-card: 0 4px 24px rgba(0,0,0,.06);
-        --kb-shadow-hover:0 8px 32px rgba(0,0,0,.11);
+        --kb-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        --kb-shadow-hover:0 4px 12px rgba(0,0,0,.08);
         --kb-shadow-nav:  0 2px 16px rgba(0,0,0,.10);
         --kb-transition:  0.28s ease;
     }
@@ -64,19 +63,21 @@
     *::after { box-sizing: border-box; }
 
     body {
-        font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
-        font-size: .9375rem;      /* 15px — slightly more refined than 16px */
+        font-family: var(--bs-body-font-family) !important;
+        font-size: var(--bs-body-font-size) !important;
         font-weight: 400;
-        color: var(--kb-text);
+        color: #212529; /* Strict dark grey for high contrast */
         background-color: var(--kb-surface);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         letter-spacing: -.01em;
     }
 
-    h1, h2, h3, h4, h5, h6,
-    .h1, .h2, .h3, .h4, .h5, .h6 {
-        font-family: 'Poppins', sans-serif;
+    h1, .h1 { font-size: 1.75rem !important; font-weight: 700 !important; }
+    h2, .h2 { font-size: 1.4rem !important; font-weight: 600 !important; }
+    h3, .h3 { font-size: 1.15rem !important; font-weight: 600 !important; }
+    h4, h5, h6,
+    .h4, .h5, .h6 {
         font-weight: 600;
         color: var(--kb-text);
         letter-spacing: -.02em;
@@ -124,9 +125,9 @@
 
     /* ── Cards ──────────────────────────────────────────────────────────── */
     .card {
-        border: none !important;
-        border-radius: var(--kb-radius-card) !important;
-        box-shadow: var(--kb-shadow-card);
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
         background: var(--kb-card-bg);
         transition: box-shadow var(--kb-transition), transform var(--kb-transition);
         overflow: hidden;   /* keeps child border-radius clean */
@@ -236,11 +237,12 @@
         color: var(--kb-text);
         --bs-table-striped-bg: rgba(26,61,92,.025);
     }
+    .table th,
     .table thead th {
         font-weight: 600;
-        font-size: .75rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: .07em;
+        letter-spacing: 0.025em;
         color: var(--kb-muted);
         border-bottom: 2px solid var(--kb-border);
         background: #fafbfc;
@@ -368,26 +370,88 @@
         to   { opacity: 1; transform: translateY(0);    }
     }
 
-    </style>
+    /* ── Phase 36 & 38: Global Typography & Brand Colors ────────── */
+    :root {
+        --kb-red: #d32f2f;
+        --kb-blue: #0275d8;
+        --kb-green: #28a745;
+        --bs-body-font-family: 'Open Sans', sans-serif;
+        --bs-body-font-size: 0.9rem; /* Professional compact dashboard scale */
+    }
+    body {
+        font-family: 'Open Sans', sans-serif !important;
+        font-size: var(--bs-body-font-size) !important;
+        color: #212529; /* Strict dark grey for high contrast */
+    }
+
+    body, h1, h2, h3, h4, h5, h6, p, a, span, div {
+        font-family: 'Open Sans', sans-serif !important;
+    }
+
+    h1, .h1 { font-size: 1.75rem !important; font-weight: 700 !important; }
+    h2, .h2 { font-size: 1.4rem !important; font-weight: 600 !important; }
+    h3, .h3 { font-size: 1.15rem !important; font-weight: 600 !important; }
+    
+    /* Professional Card and Container Polish */
+    .card {
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    /* Global Password Visibility Toggle */
+    .password-wrapper { position: relative; }
+    .password-toggle-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #6c757d; z-index: 10; }
+    .password-toggle-icon:hover { color: var(--kb-accent, #e8a020); }
+
+    
+    /* --- CSS Footer & Layout Fixes --- */
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    .main-content-wrapper, .content-wrap, main {
+        flex: 1 0 auto;
+    }
+    footer.kb-fresh-footer, footer {
+        position: relative !important;
+        z-index: 9999 !important;
+        margin-top: 4rem !important;
+        background-color: #212529 !important;
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15) !important;
+        display: block !important;
+        width: 100% !important;
+        clear: both !important;
+    }
+</style>
 
     {% block extra_css %}{% endblock %}
 </head>
 
-<body class="d-flex flex-column h-100 m-0">
+<body class="d-flex flex-column min-vh-100 m-0">
+
+
 
 <!-- ================================================================
-     NAVBAR
+     MAIN NAVBAR
 ================================================================ -->
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top
-    {% if request.resolver_match.url_name == 'home' %}navbar-homepage{% else %}bg-kb-primary{% endif %}"
-    id="main-navbar" style="z-index: 1050 !important; {% if request.resolver_match.url_name == 'home' %}position:absolute;width:100%;top:0;background:transparent!important;{% endif %}">
-
-    <div class="container-fluid">
-
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top" style="z-index: 1050; padding-top: 1rem; padding-bottom: 1rem;">
+    <div class="container-fluid px-lg-4">
         <!-- Brand -->
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'reports:dashboard' %}">
-            <i class="bi bi-building-fill-check fs-4"></i>
-            <span>KB Foundation</span>
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'core:home' %}">
+            <img src="{% static 'images/kb_logo.jpeg' %}" alt="KB Foundation Logo" width="45" height="45" class="me-2 rounded-circle object-fit-contain bg-white border border-2 border-light shadow-sm">
+            <span class="fw-bold" style="color: #1a3d5c;">KB <span style="color: #e8a020;">Foundation</span></span>
         </a>
 
         <!-- Mobile toggle -->
@@ -406,165 +470,94 @@
         <!-- Nav links -->
         <div class="collapse navbar-collapse" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-                {% if user.is_authenticated %}
-
-                    <!-- Dashboard — all roles -->
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}"
-                           href="{% url 'reports:dashboard' %}">
-                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
-                        </a>
-                    </li>
-
-                    <!-- Donors — admin / member only -->
-                    {% if user.role == 'admin' or user.role == 'member' %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.app_name == 'donors' %}active{% endif %}"
-                           href="{% url 'donors:donor_list' %}">
-                            <i class="bi bi-people-fill me-1"></i>Donors
-                        </a>
-                    </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'event_list' %}active{% endif %}" href="{% url 'core:event_list' %}">
+                        <i class="bi bi-calendar-event me-1"></i>Events
+                    </a>
+                </li>
+                
+                {% if user.is_authenticated and request.resolver_match.url_name != 'home' %}
+                <!-- Dashboard -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}"
+                       href="{% url 'reports:dashboard' %}">
+                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </a>
+                </li>
+                
+                <!-- Members (Admin Only) -->
+                {% if user.role == 'admin' or user.is_superuser %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'admin_member_list' %}active{% endif %}"
+                       href="{% url 'reports:admin_member_list' %}">
+                        <i class="bi bi-person-badge-fill me-1"></i>Members
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Donors -->
+                {% if user.role == 'admin' or user.role == 'member' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'donors' %}active{% endif %}"
+                       href="{% url 'donors:donor_list' %}">
+                        <i class="bi bi-people-fill me-1"></i>Donors
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Expenditures -->
+                {% if user.role == 'admin' or user.role == 'member' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.app_name == 'expenditures' %}active{% endif %}"
+                       href="{% url 'expenditures:expenditure_list' %}">
+                        <i class="bi bi-cash-stack me-1"></i>Expenditures
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Scholarships -->
+                {% if user.role != 'donor' %}
+                <li class="nav-item">
+                    {% if user.role == 'applicant' %}
+                    <a class="nav-link {% if request.resolver_match.app_name == 'scholarships' %}active{% endif %}"
+                       href="{% url 'scholarships:application_status' %}">
+                        <i class="bi bi-mortarboard-fill me-1"></i>My Application
+                    </a>
+                    {% else %}
+                    <a class="nav-link {% if request.resolver_match.app_name == 'scholarships' %}active{% endif %}"
+                       href="{% url 'scholarships:application_list' %}">
+                        <i class="bi bi-mortarboard-fill me-1"></i>Scholarships
+                    </a>
                     {% endif %}
-
-                    <!-- Expenditures — admin / member only -->
-                    {% if user.role == 'admin' or user.role == 'member' %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.app_name == 'expenditures' %}active{% endif %}"
-                           href="{% url 'expenditures:expenditure_list' %}">
-                            <i class="bi bi-cash-stack me-1"></i>Expenditures
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    <!-- Scholarships — role-aware link (hidden for Donors) -->
-                    {% if user.role != 'donor' %}
-                    <li class="nav-item">
-                        {% if user.role == 'applicant' %}
-                        <a class="nav-link {% if request.resolver_match.app_name == 'scholarships' %}active{% endif %}"
-                           href="{% url 'scholarships:application_status' %}">
-                            <i class="bi bi-mortarboard-fill me-1"></i>My Application
-                        </a>
-                        {% else %}
-                        <a class="nav-link {% if request.resolver_match.app_name == 'scholarships' %}active{% endif %}"
-                           href="{% url 'scholarships:application_list' %}">
-                            <i class="bi bi-mortarboard-fill me-1"></i>Scholarships
-                        </a>
-                        {% endif %}
-                    </li>
-                    {% endif %}
-
-                    <!-- Reports — Admin / Member only -->
-                    {% if user.role == 'admin' or user.role == 'member' %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'summary_report' %}active{% endif %}"
-                           href="{% url 'reports:summary_report' %}">
-                            <i class="bi bi-bar-chart-fill me-1"></i>Reports
-                        </a>
-                    </li>
-                    {% endif %}
-
+                </li>
+                {% endif %}
                 {% endif %}
             </ul>
 
-            <!-- Right-side: user menu or login -->
-            <ul class="navbar-nav ms-auto">
+            <!-- Right-side -->
+            <ul class="navbar-nav ms-auto align-items-lg-center">
                 {% if user.is_authenticated %}
-                <!-- Notifications Dropdown -->
-                <li class="nav-item dropdown me-2">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-1"
-                       href="#" id="notifDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-bell-fill fs-5 position-relative">
-                        {% if unread_notifications_count > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="font-size: 0.55rem;">
-                                {{ unread_notifications_count }}
-                                <span class="visually-hidden">unread messages</span>
-                            </span>
-                            {% else %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="font-size: 0.55rem; display: none;">0</span>
-                            {% endif %}
-                        </i>
+                {% if request.resolver_match.url_name == 'home' %}
+                <li class="nav-item me-2">
+                    <a class="btn btn-outline-primary btn-sm fw-bold shadow-sm" href="{% url 'reports:dashboard' %}">
+                        <i class="bi bi-speedometer2 me-1"></i>Go to Dashboard
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown" style="z-index: 9999; max-width: 350px; max-height: 400px; overflow-y: auto;">
-                        <li><h6 class="dropdown-header">Notifications</h6></li>
-                        {% if latest_notifications %}
-                            {% for notif in latest_notifications %}
-                            <li class="notification-item">
-                                <div class="dropdown-item text-wrap d-flex justify-content-between align-items-start gap-2" style="font-size: 0.85rem;">
-                                    <div>
-                                        {{ notif.message }}
-                                        <div class="text-muted" style="font-size: 0.7rem;">{{ notif.created_at|timesince }} ago</div>
-                                    </div>
-                                    <button class="dismiss-notif-btn btn btn-sm btn-outline-secondary py-0 px-1 flex-shrink-0"
-                                            data-id="{{ notif.pk }}"
-                                            title="Dismiss"
-                                            style="font-size: 0.7rem; line-height: 1.6; border: none; background: none; cursor: pointer;">&#10003;</button>
-                                </div>
-                            </li>
-                            {% endfor %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-center fw-medium text-primary" style="font-size: 0.85rem;" href="{% url 'core:mark_notifications_read' %}">
-                                    Mark all as read
-                                </a>
-                            </li>
-                        {% else %}
-                            <li><span class="dropdown-item text-muted text-center" style="font-size: 0.85rem;">No new notifications</span></li>
-                        {% endif %}
-                    </ul>
                 </li>
-
-                <!-- User Dropdown -->
-                <li class="nav-item dropdown">
-                    <a
-                        class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-                        href="#"
-                        id="userDropdown"
-                        role="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                    >
-                        <i class="bi bi-person-circle fs-5"></i>
-                        <span>{{ user.get_full_name|default:user.username }}</span>
-                        <span class="badge bg-light text-dark ms-1">{{ user.get_role_display }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:profile' %}">
-                                <i class="bi bi-person me-2"></i>My Profile
-                            </a>
-                        </li>
-                        {% if user.role == 'admin' %}
-                        <li>
-                            <a class="dropdown-item" href="{% url 'admin:index' %}">
-                                <i class="bi bi-gear me-2"></i>Admin Panel
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </li>
-                
-                <!-- Dedicated Logout Button -->
-                <li class="nav-item ms-3 d-flex align-items-center">
-                    <form method="post" action="{% url 'accounts:logout' %}{% if user.role == 'donor' or user.role == 'member' or user.role == 'reviewer' %}?next={% url 'accounts:portal_login' %}{% endif %}" class="m-0">
+                {% endif %}
+                <li class="nav-item">
+                    <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
                         {% csrf_token %}
-                        {% if user.role == 'donor' or user.role == 'member' or user.role == 'reviewer' %}
-                        <input type="hidden" name="next" value="{% url 'accounts:portal_login' %}">
-                        {% endif %}
-                        <button type="submit" class="btn btn-sm btn-outline-light">
+                        <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm text-white" style="color: #ffffff !important;">
                             <i class="bi bi-box-arrow-right me-1"></i>Logout
                         </button>
                     </form>
                 </li>
                 {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:login' %}">
-                        <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                    </a>
+                <li class="nav-item me-2">
+                    <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
                 </li>
                 <li class="nav-item">
-                    <a class="btn btn-outline-light btn-sm ms-2" href="{% url 'accounts:register' %}">
+                    <a class="btn btn-sm fw-bold shadow-sm text-white" href="{% url 'accounts:register' %}" style="background-color: #e8a020; color: #ffffff !important;">
                         Apply for Scholarship
                     </a>
                 </li>
@@ -591,21 +584,17 @@
 <!-- ================================================================
      MAIN CONTENT BLOCK
 ================================================================ -->
-<main class="flex-grow-1 {% if request.resolver_match.url_name != 'home' %}container-fluid py-4{% endif %}" id="main-content">
-
+<div class="main-content-wrapper {% if request.resolver_match.url_name != 'home' %}container-fluid py-4{% endif %}" >
     {% block content %}
     {% endblock %}
-</main>
+</div>
 
-<!-- ================================================================
-     FOOTER
-================================================================ -->
-<footer class="footer bg-dark text-light py-3 mt-auto">
-    <div class="container text-center">
-        <small>
-            &copy; {% now "Y" %} KB Foundation &mdash; Management System &nbsp;|&nbsp;
-            Built with <i class="bi bi-heart-fill text-danger"></i> by Group 8
-        </small>
+<!-- BRAND NEW BULLETPROOF FOOTER -->
+<footer class="kb-fresh-footer bg-dark text-white text-center py-3 mt-auto w-100" >
+    <div class="container">
+        <p class="mb-0 text-white" style="font-size: 0.95rem; font-weight: 500;">
+            &copy; {% now "Y" %} KB Foundation &mdash; Management System. All rights reserved.
+        </p>
     </div>
 </footer>
 
@@ -738,6 +727,32 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(function () { /* silent fail — page reload will sync */ });
         });
+    });
+});
+</script>
+
+<!-- Global Password Toggle Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pwInputs = document.querySelectorAll('input[type="password"]');
+    pwInputs.forEach(input => {
+        // Only wrap if it hasn't been manually wrapped in specific auth templates
+        if (!input.closest('.pw-wrapper') && !input.closest('.password-wrapper')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'password-wrapper';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-eye-slash password-toggle-icon';
+            wrapper.appendChild(icon);
+
+            icon.addEventListener('click', function() {
+                const isPassword = input.getAttribute('type') === 'password';
+                input.setAttribute('type', isPassword ? 'text' : 'password');
+                this.className = isPassword ? 'bi bi-eye password-toggle-icon' : 'bi bi-eye-slash password-toggle-icon';
+            });
+        }
     });
 });
 </script>

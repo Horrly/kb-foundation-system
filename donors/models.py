@@ -148,9 +148,9 @@ class Donation(models.Model):
         OTHER         = 'other',         'Other'
 
     class Status(models.TextChoices):
-        PENDING   = 'pending',   'Pending'
-        CONFIRMED = 'confirmed', 'Confirmed'
-        REJECTED  = 'rejected',  'Rejected'
+        PENDING       = 'pending',       'Pending'
+        CONFIRMED     = 'confirmed',     'Confirmed'
+        NOT_CONFIRMED = 'not_confirmed', 'Not Confirmed'
 
     # ── Core donation fields ─────────────────────────────────────────────────
     donor = models.ForeignKey(
@@ -192,7 +192,7 @@ class Donation(models.Model):
 
     # ── Phase 3: Verification fields (Admin-managed) ─────────────────────────
     status = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
         verbose_name='Verification Status',
@@ -206,10 +206,11 @@ class Donation(models.Model):
         verbose_name='Amount Confirmed (₦)',
         help_text='The amount the Admin verified actually hit the bank account.',
     )
-    admin_notes = models.TextField(
-        blank=True,
+    admin_note = models.TextField(
+        blank=True, 
+        null=True,
         verbose_name='Admin Notes',
-        help_text='Rejection reason or internal verification notes (visible to Donor).',
+        help_text='Reason for Not Confirmed or internal verification notes.',
     )
 
     # ── Timestamps ───────────────────────────────────────────────────────────
@@ -226,21 +227,13 @@ class Donation(models.Model):
         return self.status == self.Status.CONFIRMED
 
     @property
-    def is_rejected(self):
-        return self.status == self.Status.REJECTED
+    def is_not_confirmed(self):
+        return self.status == self.Status.NOT_CONFIRMED
 
     @property
     def effective_amount(self):
         """Returns confirmed amount if available, else claimed amount."""
         return self.amount_confirmed if self.amount_confirmed is not None else self.amount
-
-    @property
-    def admin_note(self):
-        return self.admin_notes
-
-    @admin_note.setter
-    def admin_note(self, value):
-        self.admin_notes = value
 
     def __str__(self):
         return (

@@ -149,13 +149,13 @@
         <div class="col-lg-7">
             <div class="row g-4">
 
-                <!-- Approve Panel -->
+                <!-- Confirm Panel -->
                 <div class="col-md-6">
                     <div class="card verify-panel panel-approve h-100">
                         <div class="card-header fw-semibold d-flex align-items-center gap-2 py-2 px-3"
                              style="background:#f0fdf4;">
                             <i class="bi bi-check-circle-fill text-success"></i>
-                            Approve Donation
+                            Confirm Donation
                         </div>
                         <div class="card-body p-3 d-flex flex-column justify-content-between">
                             <div>
@@ -196,7 +196,7 @@
                                             id="btn-approve"
                                             disabled>
                                         <i class="bi bi-check-circle-fill me-1"></i>
-                                        Approve &amp; Notify
+                                        Confirm &amp; Notify
                                     </button>
                                 </form>
                             </div>
@@ -204,52 +204,33 @@
                     </div>
                 </div>
 
-                <!-- Reject Panel -->
+                <!-- Not Confirmed Panel -->
                 <div class="col-md-6">
-                    <div class="card verify-panel panel-reject h-100">
+                    <div class="card verify-panel panel-reject h-100" style="border-top: 4px solid #ffc107;">
                         <div class="card-header fw-semibold d-flex align-items-center gap-2 py-2 px-3"
-                             style="background:#fff5f5;">
-                            <i class="bi bi-x-circle-fill text-danger"></i>
-                            Reject Donation
+                             style="background:#fffbeb;">
+                            <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                            Not Confirmed
                         </div>
                         <div class="card-body p-3 d-flex flex-column justify-content-between">
                             <div>
                                 <p class="text-muted small mb-2">
-                                    Provide a clear reason for rejection. This will be
-                                    included in the email sent to the donor.
+                                    If the payment cannot be verified on the bank statement, mark it as Not Confirmed.
                                 </p>
-                                <form method="post" novalidate id="reject-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="reject">
-
-                                    <div class="mb-2">
-                                        <label for="{{ form.admin_notes.id_for_label }}" class="form-label fw-semibold small mb-1">
-                                            {{ form.admin_notes.label }} <span class="text-danger">*</span>
-                                        </label>
-                                        {{ form.admin_notes }}
-                                        {% if form.admin_notes.errors %}
-                                        <div class="text-danger small mt-1">{{ form.admin_notes.errors|join:", " }}</div>
-                                        {% endif %}
-                                        <div class="form-text small">{{ form.admin_notes.help_text }}</div>
-                                    </div>
-
-                                    <!-- Rejection warning -->
-                                    <div class="alert alert-danger py-1 px-2 d-flex gap-2 align-items-start mb-2 small" style="font-size: 0.78rem;">
-                                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
-                                        <span>
-                                            <strong>Irreversible:</strong> Donor will be emailed rejection.
-                                        </span>
-                                    </div>
-
-                                    <button type="submit"
-                                            class="btn btn-outline-danger w-100 py-2 fw-bold"
-                                            id="btn-reject"
-                                            onclick="return confirm('Are you sure you want to REJECT this donation from {{ donation.donor.full_name }}?')">
-                                        <i class="bi bi-x-circle-fill me-1"></i>
-                                        Reject &amp; Notify
-                                    </button>
-                                </form>
+                                <!-- Rejection warning -->
+                                <div class="alert alert-warning py-1 px-2 d-flex gap-2 align-items-start mb-4 small" style="font-size: 0.78rem;">
+                                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                                    <span>
+                                        <strong>Notice:</strong> Donor will be emailed asking for clarification.
+                                    </span>
+                                </div>
                             </div>
+                            <button type="button"
+                                    class="btn btn-warning w-100 py-2 fw-bold text-dark"
+                                    data-bs-toggle="modal" data-bs-target="#notConfirmedModal">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                Mark Not Confirmed
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -267,7 +248,37 @@
         </div>
     </div>
 
+    
+
 </div>
+<!-- Modal for Not Confirmed Action -->
+    <div class="modal fade" id="notConfirmedModal" tabindex="-1" aria-labelledby="notConfirmedModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <form method="post" id="not-confirmed-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="not_confirmed">
+                    <div class="modal-header bg-warning text-dark border-0">
+                        <h5 class="modal-title fw-bold" id="notConfirmedModalLabel"><i class="bi bi-exclamation-circle-fill me-2"></i>Mark Donation as Not Confirmed</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            Please provide a reason why this donation cannot be confirmed. This message will be sent to the donor.
+                        </p>
+                        <div class="mb-3">
+                            <label for="admin_note" class="form-label fw-semibold">Reason <span class="text-danger">*</span></label>
+                            <textarea name="admin_note" id="admin_note" class="form-control" rows="3" required placeholder="e.g. The receipt is blurry or no matching transaction was found..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning fw-bold text-dark">Submit &amp; Notify Donor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}

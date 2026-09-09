@@ -3,6 +3,8 @@ reports/views.py — Days 12-14
 Full dashboard aggregation for all roles + a dedicated Summary Report view.
 """
 
+import csv
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q
@@ -74,11 +76,48 @@ def dashboard(request):
 @login_required
 @role_required('admin')
 def admin_dashboard(request):
+    import json
+    from donors.models import Donation
+    from expenditures.models import Expenditure
+    from accounts.models import CustomUser
+    
+    if request.method == 'POST' and request.POST.get('action') == 'update_member_role':
+        member_id = request.POST.get('member_id')
+        new_role = request.POST.get('committee_role')
+        if member_id and new_role:
+            try:
+                member = CustomUser.objects.get(pk=member_id, role=CustomUser.Role.MEMBER)
+                member.committee_role = new_role
+                member.save()
+                from django.contrib import messages
+                messages.success(request, f"Updated role for {member.get_full_name() or member.username} to {member.get_committee_role_display()}.")
+            except CustomUser.DoesNotExist:
+                pass
+        return redirect('reports:admin_dashboard')
+
+    members = CustomUser.objects.filter(role=CustomUser.Role.MEMBER).order_by('first_name', 'last_name')
+
     total_donors, total_donations, recent_donations = _donor_stats()
     total_expenditures, exp_count                    = _expenditure_stats()
     total_apps, pending, under_review, approved, rejected, total_awarded, recipients = _scholarship_stats()
 
     net_balance = total_donations - total_expenditures
+
+    # Phase 39: Admin Dashboard Visualizations & Donor Leaderboard
+    # Top Donors
+    top_donors = list(
+        Donation.objects
+        .filter(status=Donation.Status.CONFIRMED)
+        .values('donor__full_name')
+        .annotate(total_amount=Sum('amount'))
+        .order_by('-total_amount')[:10]
+    )
+
+    # Expense Data
+    exp_by_category = Expenditure.objects.values('category').annotate(total=Sum('amount'))
+    cat_labels_map = dict(Expenditure.Category.choices)
+    expense_labels = [cat_labels_map.get(e['category'], e['category']) for e in exp_by_category]
+    expense_amounts = [float(e['total']) for e in exp_by_category]
 
     context = {
         'page_title': 'Admin Dashboard',
@@ -94,10 +133,16 @@ def admin_dashboard(request):
         'rejected':           rejected,
         'total_awarded':      total_awarded,
         'recipients':         recipients,
+        'members':            members,
         'exp_count':          exp_count,
         # Recent data tables
         'recent_donations':   recent_donations,
         'recent_apps':        _recent_applications(),
+        # Visualizations
+        'top_donors':         top_donors,
+        'expense_labels':     json.dumps(expense_labels),
+        'expense_amounts':    json.dumps(expense_amounts),
+                'events':         Event.objects.all().order_by('-date')[:5],
     }
     return render(request, 'reports/admin_dashboard.html', context)
 
@@ -106,22 +151,31 @@ def admin_dashboard(request):
 @login_required
 @role_required('member')
 def member_dashboard(request):
-    total_donors, total_donations, recent_donations = _donor_stats()
-    total_expenditures, exp_count                    = _expenditure_stats()
+    from django.db.models import Sum
+    from donors.models import Donation
+    from expenditures.models import Expenditure
+    from scholarships.models import ScholarshipApplication
+    from core.models import Event
+    from django.utils import timezone
+
+    total_donors, _, recent_donations = _donor_stats()
+    _, exp_count = _expenditure_stats()
     total_apps, pending, under_review, approved, rejected, total_awarded, recipients = _scholarship_stats()
+
+    pending_applications = ScholarshipApplication.objects.exclude(
+        status__in=[ScholarshipApplication.Status.ACCEPTED, ScholarshipApplication.Status.REJECTED]
+    ).select_related('applicant').order_by('created_at')
+
+    total_donations_sum = Donation.objects.filter(status=Donation.Status.CONFIRMED).aggregate(total=Sum('amount'))['total'] or 0
+    total_expenditures_sum = Expenditure.objects.aggregate(total=Sum('amount'))['total'] or 0
+    upcoming_events = Event.objects.filter(date__gte=timezone.now().date()).order_by('date', 'time')
 
     context = {
         'page_title':         'Member Dashboard',
-        'total_donors':       total_donors,
-        'total_donations':    total_donations,
-        'total_expenditures': total_expenditures,
-        'total_apps':         total_apps,
-        'pending':            pending,
-        'approved':           approved,
-        'recipients':         recipients,
-        'total_awarded':      total_awarded,
-        'recent_donations':   recent_donations,
-        'recent_apps':        _recent_applications(),
+        'pending_applications': pending_applications,
+        'total_donations_sum': total_donations_sum,
+        'total_expenditures_sum': total_expenditures_sum,
+        'upcoming_events':    upcoming_events,
     }
     return render(request, 'reports/member_dashboard.html', context)
 
@@ -187,13 +241,13 @@ def donor_dashboard(request):
         total_given   = donor_profile.total_donated()
         pending_count  = all_donations.filter(status=Donation.Status.PENDING).count()
         confirmed_count = all_donations.filter(status=Donation.Status.CONFIRMED).count()
-        rejected_count  = all_donations.filter(status=Donation.Status.REJECTED).count()
+        not_confirmed_count  = all_donations.filter(status=Donation.Status.NOT_CONFIRMED).count()
     else:
         all_donations   = []
         total_given     = 0
         pending_count   = 0
         confirmed_count = 0
-        rejected_count  = 0
+        not_confirmed_count  = 0
 
     context = {
         'page_title':      'My Donor Dashboard',
@@ -202,8 +256,9 @@ def donor_dashboard(request):
         'total_given':     total_given,
         'pending_count':   pending_count,
         'confirmed_count': confirmed_count,
-        'rejected_count':  rejected_count,
-        'total_submissions': (pending_count + confirmed_count + rejected_count),
+        'not_confirmed_count':  not_confirmed_count,
+        'total_submissions': (pending_count + confirmed_count + not_confirmed_count),
+        'events':              Event.objects.all().order_by('-date')[:5],
     }
     return render(request, 'reports/donor_dashboard.html', context)
 
@@ -267,3 +322,85 @@ def summary_report(request):
         'donations_trend':   list(donations_trend),
     }
     return render(request, 'reports/summary_report.html', context)
+
+
+# ── CSV Exports (Phase 43) ───────────────────────────────────────────────────
+
+@login_required
+@role_required('admin')
+def export_accepted_applicants_csv(request):
+    """Export all accepted scholarship applications to CSV."""
+    from scholarships.models import ScholarshipApplication
+    
+    # Query accepted applications (using new 'accepted' status)
+    qs = ScholarshipApplication.objects.filter(status=ScholarshipApplication.Status.ACCEPTED).select_related('applicant')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="accepted_applicants.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Name', 'Email', 'Institution', 'Course', 'Session', 'CGPA', 'Application Date'])
+    
+    for app in qs:
+        writer.writerow([
+            app.applicant.get_full_name() or app.applicant.username,
+            app.applicant.email,
+            app.institution,
+            app.course_of_study,
+            app.academic_session,
+            app.current_cgpa,
+            app.application_date.strftime('%Y-%m-%d')
+        ])
+        
+    return response
+
+
+@login_required
+@role_required('admin')
+def export_confirmed_donors_csv(request):
+    """Export all confirmed donations to CSV."""
+    from donors.models import Donation
+    
+    # Query confirmed donations
+    qs = Donation.objects.filter(status=Donation.Status.CONFIRMED).select_related('donor', 'donor__user')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="confirmed_donors.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Donor Name', 'Email', 'Amount (NGN)', 'Date'])
+    
+    for donation in qs:
+        writer.writerow([
+            donation.donor.full_name,
+            donation.donor.user.email,
+            donation.amount,
+            donation.date.strftime('%Y-%m-%d')
+        ])
+        
+    return response
+
+
+
+@login_required
+@role_required('admin')
+def admin_member_list(request):
+    from accounts.models import CustomUser
+    
+    if request.method == 'POST' and request.POST.get('action') == 'update_member_role':
+        member_id = request.POST.get('member_id')
+        new_role = request.POST.get('committee_role')
+        if member_id and new_role:
+            try:
+                member = CustomUser.objects.get(pk=member_id, role=CustomUser.Role.MEMBER)
+                member.committee_role = new_role
+                member.save()
+                from django.contrib import messages
+                messages.success(request, f"Updated role for {member.get_full_name() or member.username} to {member.get_committee_role_display()}.")
+            except CustomUser.DoesNotExist:
+                pass
+        from django.shortcuts import redirect
+        return redirect('reports:admin_member_list')
+
+    members = CustomUser.objects.filter(role=CustomUser.Role.MEMBER).order_by('first_name', 'last_name')
+    return render(request, 'reports/admin_member_list.html', {'members': members, 'page_title': 'Committee Members'})

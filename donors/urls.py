@@ -25,4 +25,7 @@ urlpatterns = [
     # ── Phase 3 & 27: Admin verify/review a specific donation ─────────────
     path('donations/<int:pk>/verify/', views.verify_donation, name='verify_donation'),
     path('donations/<int:pk>/review/', views.verify_donation, name='review_donation'),
+
+    # ── Phase 46: Donor Print Receipt ──────────────────────────────────────
+    path('donations/<int:donation_id>/receipt/', views.donor_receipt_view, name='receipt_print'),
 ]

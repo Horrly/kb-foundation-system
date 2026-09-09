@@ -34,6 +34,20 @@ class CustomUser(AbstractUser):
         help_text='Determines what areas of the system this user can access.',
     )
 
+
+    class CommitteeRole(models.TextChoices):
+        STANDARD  = 'standard',  'Standard Member'
+        TREASURER = 'treasurer', 'Treasurer'
+        WELFARE   = 'welfare',   'Welfare'
+        SECRETARY = 'secretary', 'Secretary'
+
+    committee_role = models.CharField(
+        max_length=20,
+        choices=CommitteeRole.choices,
+        default=CommitteeRole.STANDARD,
+        help_text='Only applicable if the user is a Member.',
+    )
+
     # Phase 1 additions -------------------------------------------------------
 
     unique_id = models.CharField(

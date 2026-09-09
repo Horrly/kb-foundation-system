@@ -93,6 +93,7 @@
                     </small>
                 </div>
 
+                {% if not application.is_submitted %}
                 <!--
                     ╔══════════════════════════════════════════╗
                     ║  CRITICAL: enctype="multipart/form-data" ║
@@ -170,6 +171,21 @@
                         </button>
                     </div>
                 </form>
+                {% else %}
+                <div class="alert alert-info py-4 text-center border-0 shadow-sm rounded">
+                    <i class="bi bi-lock-fill fs-1 text-info d-block mb-3"></i>
+                    <h5 class="fw-bold mb-2">Uploads Locked</h5>
+                    <p class="mb-0 text-muted">
+                        Your application has been securely submitted and is locked for review. 
+                        No further documents can be uploaded.
+                    </p>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'scholarships:application_status' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Status
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
 

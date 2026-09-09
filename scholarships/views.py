@@ -65,8 +65,18 @@ def application_status(request):
     missing_types = set()
 
     if application:
+        # Phase 45: Handle Bank Details Update
+        if request.method == 'POST' and request.POST.get('action') == 'update_bank':
+            if application.status in [ScholarshipApplication.Status.ACCEPTED, ScholarshipApplication.Status.AWARDED, ScholarshipApplication.Status.SCREENING_PASSED]:
+                application.bank_name = request.POST.get('bank_name', '').strip()
+                application.account_number = request.POST.get('account_number', '').strip()
+                application.account_name = request.POST.get('account_name', '').strip()
+                application.save(update_fields=['bank_name', 'account_number', 'account_name'])
+                messages.success(request, "Bank details updated securely. Your disbursement is being processed.")
+                return redirect('scholarships:application_status')
+
         documents = application.documents.all()
-        if application.status == ScholarshipApplication.Status.APPROVED:
+        if application.status in [ScholarshipApplication.Status.ACCEPTED, ScholarshipApplication.Status.AWARDED, ScholarshipApplication.Status.SCREENING_PASSED]:
             recipient = getattr(application, 'recipient_record', None)
         uploaded_types = set(documents.values_list('document_type', flat=True))
         all_types      = {dt.value for dt in Document.DocumentType}
@@ -90,7 +100,12 @@ def document_upload(request):
         messages.warning(request, 'Submit an application before uploading documents.')
         return redirect('scholarships:application_create')
 
-    locked = [ScholarshipApplication.Status.APPROVED, ScholarshipApplication.Status.REJECTED]
+    # Phase 41: Strict lockdown
+    if getattr(application, 'is_submitted', False):
+        messages.error(request, 'Your application has been locked for review. No further documents can be uploaded.')
+        return redirect('scholarships:application_status')
+
+    locked = [ScholarshipApplication.Status.ACCEPTED, ScholarshipApplication.Status.REJECTED]
     if application.status in locked:
         messages.info(request, f'Your application is {application.get_status_display()}. Uploads are locked.')
         return redirect('scholarships:application_status')
@@ -113,6 +128,31 @@ def document_upload(request):
         'existing_docs': application.documents.all(),
         'form_action':   'Upload Document',
     })
+
+@login_required
+@role_required('applicant')
+def application_submit(request):
+    application = get_applicant_application(request.user)
+    if not application:
+        return redirect('scholarships:application_create')
+        
+    if request.method == 'POST':
+        if not getattr(application, 'is_submitted', False):
+            application.is_submitted = True
+            application.save(update_fields=['is_submitted'])
+            
+            from django.core.mail import send_mail
+            from django.conf import settings
+            send_mail(
+                subject='Application Submitted',
+                message='Your application has been successfully submitted and will be reviewed.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[request.user.email],
+                fail_silently=True,
+            )
+            messages.success(request, 'Your application has been successfully submitted and locked for review.')
+        
+    return redirect('scholarships:application_status')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -189,7 +229,7 @@ def application_review(request, pk):
         # Reviewers cannot approve or reject — enforce RBAC at action level
         if (request.user.role == 'reviewer'
                 and new_status in [
-                    ScholarshipApplication.Status.APPROVED,
+                    ScholarshipApplication.Status.ACCEPTED,
                     ScholarshipApplication.Status.REJECTED,
                 ]):
             messages.error(
@@ -202,7 +242,7 @@ def application_review(request, pk):
         # Members are read-only for final decisions — enforce at view level
         if (request.user.role == 'member'
                 and new_status in [
-                    ScholarshipApplication.Status.APPROVED,
+                    ScholarshipApplication.Status.ACCEPTED,
                     ScholarshipApplication.Status.REJECTED,
                 ]):
             messages.error(
@@ -215,35 +255,34 @@ def application_review(request, pk):
         old_status = application.status
         form.save()
 
-        # Trigger Phase 6 Notifications & Email
-        if old_status != new_status and new_status in [
-            ScholarshipApplication.Status.APPROVED, 
-            ScholarshipApplication.Status.REJECTED
-        ]:
+        # Trigger Phase 6/41 Notifications & Email for ANY status change
+        if old_status != new_status:
             from core.models import Notification
             from accounts.models import CustomUser
             from django.core.mail import send_mail
+            from django.conf import settings
             
-            action_text = "Approved" if new_status == ScholarshipApplication.Status.APPROVED else "Rejected"
+            action_text = application.get_status_display()
             
-            # a) Notify Members
-            members = CustomUser.objects.filter(role=CustomUser.Role.MEMBER, is_active=True)
-            Notification.objects.bulk_create([
-                Notification(user=u, message=f"Scholarship application for {application.applicant.get_full_name() or application.applicant.username} has been {action_text}.")
-                for u in members
-            ])
+            # a) Notify Members (only for Approved/Rejected to avoid noise)
+            if new_status in [ScholarshipApplication.Status.ACCEPTED, ScholarshipApplication.Status.REJECTED]:
+                members = CustomUser.objects.filter(role=CustomUser.Role.MEMBER, is_active=True)
+                Notification.objects.bulk_create([
+                    Notification(user=u, message=f"Scholarship application for {application.applicant.get_full_name() or application.applicant.username} has been marked as {action_text}.")
+                    for u in members
+                ])
             
-            # b) Notify Applicant
+            # b) Notify Applicant (for all status changes)
             Notification.objects.create(
                 user=application.applicant,
-                message=f"Your scholarship application has been {action_text}."
+                message=f"Your scholarship application status has changed to: {action_text}."
             )
             
             # c) Console email to applicant
             send_mail(
-                subject=f'Application {action_text}',
-                message=f'Hello {application.applicant.get_full_name() or application.applicant.username},\n\nYour scholarship application has been {action_text}. Please check your dashboard for more details.\n\nThank you,\nKB Foundation',
-                from_email='noreply@kbfoundation.org',
+                subject=f'[KB Foundation] Application Status Update',
+                message=f'Hello {application.applicant.get_full_name() or application.applicant.username},\n\nYour scholarship application status has been updated to: {action_text}.\nPlease check your dashboard for more details.\n\nThank you,\nKB Foundation',
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[application.applicant.email],
                 fail_silently=True,
             )
@@ -255,6 +294,61 @@ def application_review(request, pk):
     else:
         messages.error(request, 'Review update failed. Please check the form.')
 
+    return redirect('scholarships:application_detail_staff', pk=pk)
+
+
+@login_required
+@role_required('member')
+def member_recommend(request, pk):
+    application = get_object_or_404(ScholarshipApplication, pk=pk)
+    if request.method == 'POST':
+        action = request.POST.get('recommendation')
+        if action in ['Recommended', 'Not Recommended']:
+            application.member_recommendation = action
+            application.status = ScholarshipApplication.Status.RECOMMENDED if action == 'Recommended' else ScholarshipApplication.Status.IN_REVIEW
+            application.save()
+            messages.success(request, f'Application marked as {action}.')
+    return redirect('scholarships:application_detail_staff', pk=pk)
+
+
+@login_required
+@role_required('admin')
+def admin_decision(request, pk):
+    application = get_object_or_404(ScholarshipApplication, pk=pk)
+    if request.method == 'POST':
+        action = request.POST.get('decision')
+        old_status = application.status
+        
+        if action == 'Accept':
+            application.status = ScholarshipApplication.Status.ACCEPTED
+            application.save()
+            messages.success(request, 'Application Accepted.')
+            
+            from django.core.mail import send_mail
+            from django.conf import settings
+            send_mail(
+                subject='Congratulations! Application Accepted',
+                message='Congratulations! Your application has been accepted. Please stay close to your email for updates regarding the next steps, such as screening exams.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[application.applicant.email],
+                fail_silently=True,
+            )
+            
+        elif action == 'Reject':
+            application.status = ScholarshipApplication.Status.REJECTED
+            application.save()
+            messages.success(request, 'Application Rejected.')
+            
+            from django.core.mail import send_mail
+            from django.conf import settings
+            send_mail(
+                subject='Application Update',
+                message='Thank you for applying. We regret to inform you that your application was not successful at this time.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[application.applicant.email],
+                fail_silently=True,
+            )
+            
     return redirect('scholarships:application_detail_staff', pk=pk)
 
 
@@ -280,10 +374,10 @@ def award_scholarship(request, pk):
         award.application  = application
         award.save()
         # Ensure application is marked approved
-        application.status = ScholarshipApplication.Status.APPROVED
+        application.status = ScholarshipApplication.Status.ACCEPTED
         application.save()
 
-        if old_status != ScholarshipApplication.Status.APPROVED:
+        if old_status != ScholarshipApplication.Status.ACCEPTED:
             from core.models import Notification
             from accounts.models import CustomUser
             from django.core.mail import send_mail
@@ -318,4 +412,30 @@ def award_scholarship(request, pk):
     else:
         messages.error(request, 'Award form has errors. Please correct them.')
 
+    return redirect('scholarships:application_detail_staff', pk=pk)
+
+@login_required
+@role_required('admin')
+def disburse_scholarship(request, pk):
+    from expenditures.models import Expenditure
+    from django.utils import timezone
+    from django.contrib import messages
+    if request.method == 'POST':
+        application = get_object_or_404(ScholarshipApplication, pk=pk)
+        amount = request.POST.get('disbursement_amount')
+        if amount and application.bank_name:
+            application.disbursement_amount = amount
+            application.is_disbursed = True
+            application.status = ScholarshipApplication.Status.DISBURSED
+            application.save()
+
+            Expenditure.objects.create(
+                title=f"Scholarship Grant - {application.applicant.get_full_name() or application.applicant.username}",
+                amount=amount,
+                date=timezone.now().date(),
+                category=Expenditure.Category.SCHOLARSHIP_GRANTS,
+                notes=f"Bank: {application.bank_name}, Acct: {application.account_number}",
+                recorded_by=request.user.username
+            )
+            messages.success(request, "Disbursement recorded and Expenditure created.")
     return redirect('scholarships:application_detail_staff', pk=pk)

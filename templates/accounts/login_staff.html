@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -218,12 +219,10 @@
     <div class="panel-inner">
         <div class="portal-badge">
             <i class="bi bi-shield-lock-fill"></i>
-            Staff &amp; Donor Portal
+            Donor &amp; Member Portal
         </div>
-        <div class="panel-logo-ring">
-            <i class="bi bi-heart-fill"></i>
-        </div>
-        <h2>KB Foundation<br/><span>Staff Portal</span></h2>
+        <img src="{% static 'images/kb_logo.jpeg' %}" alt="KB Foundation" class="img-fluid d-block mx-auto mb-3" style="max-width: 85px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <h2>KB Foundation<br/><span>Donor/Member Portal</span></h2>
         <p class="tagline">
             Securely access your Donor or Member dashboard.
             Manage donations, track contributions,
@@ -243,10 +242,10 @@
 
         <span class="portal-chip">
             <i class="bi bi-shield-lock-fill"></i>
-            Staff &amp; Donor Portal
+            Donor &amp; Member Portal
         </span>
 
-        <h1>Staff Sign In</h1>
+        <h1>Donor/Member Login</h1>
 
         <!-- Flash messages: fixed top-right toast -->
         {% if messages %}
@@ -284,18 +283,17 @@
 
             <!-- Password -->
             <div class="mb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="{{ form.password.id_for_label }}" class="form-label mb-0">
-                        Password
-                    </label>
-                    <a href="#" class="text-decoration-none" style="font-size:.8rem;color:var(--kb-gold);"
-                       tabindex="-1" id="btn-forgot-pw">Forgot password?</a>
-                </div>
-                <div class="pw-wrapper">
+                <label for="{{ form.password.id_for_label }}" class="form-label mb-1">
+                    Password
+                </label>
+                <div class="pw-wrapper mb-1">
                     {{ form.password }}
                     <button type="button" class="pw-toggle" id="togglePassword" aria-label="Show/hide password">
                         <i class="bi bi-eye" id="pwIcon"></i>
                     </button>
+                </div>
+                <div class="clearfix">
+                    <a href="{% url 'password_reset' %}" class="float-end text-decoration-none small" style="color: var(--kb-accent);">Forgot Password?</a>
                 </div>
                 {% if form.password.errors %}
                     <ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -323,7 +321,7 @@
             <i class="bi bi-mortarboard-fill me-1" style="color:#1a3d5c;"></i>
             Scholarship Applicant?
             <a href="{% url 'accounts:login' %}" id="btn-switch-standard">
-                Go to Standard Login &rarr;
+                Applicant Login Page &rarr;
             </a>
         </div>
 

@@ -22,8 +22,9 @@
 
     /* Per-status colour schemes */
     .status-pending      { background: #fff9e6; border-left: 6px solid #ffc107; color: #7a5c00; }
-    .status-under_review { background: #e8f4fd; border-left: 6px solid #0dcaf0; color: #055160; }
-    .status-approved     { background: #e8f5ed; border-left: 6px solid #198754; color: #0d4a2a; }
+    .status-in_review    { background: #e8f4fd; border-left: 6px solid #0dcaf0; color: #055160; }
+    .status-recommended  { background: #e8f4fd; border-left: 6px solid #0dcaf0; color: #055160; }
+    .status-accepted     { background: #e8f5ed; border-left: 6px solid #198754; color: #0d4a2a; }
     .status-rejected     { background: #fdf0f0; border-left: 6px solid #dc3545; color: #6e1221; }
 
     /* Document cards */
@@ -73,6 +74,8 @@
 {% endblock %}
 
 {% block content %}
+<div class="container py-5">
+
 
 <!-- ── Page Header ── -->
 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -97,11 +100,13 @@
 <!-- ════════════════════════════════════════════════════════════
      STATUS BANNER
 ════════════════════════════════════════════════════════════ -->
+{% if application.status not in 'accepted,rejected' %}
 <div class="status-banner status-{{ application.status }}">
     <div class="status-icon">
         {% if application.status == 'pending'      %}<i class="bi bi-hourglass-split"></i>
-        {% elif application.status == 'under_review'%}<i class="bi bi-eye-fill"></i>
-        {% elif application.status == 'approved'   %}<i class="bi bi-check-circle-fill"></i>
+        {% elif application.status == 'in_review'  %}<i class="bi bi-eye-fill"></i>
+        {% elif application.status == 'recommended'%}<i class="bi bi-star-fill"></i>
+        {% elif application.status == 'accepted'   %}<i class="bi bi-check-circle-fill"></i>
         {% elif application.status == 'rejected'   %}<i class="bi bi-x-circle-fill"></i>
         {% endif %}
     </div>
@@ -110,11 +115,11 @@
         <div class="status-sub">
             {% if application.status == 'pending' %}
                 Your application has been received. Our team will begin reviewing it shortly.
-            {% elif application.status == 'under_review' %}
+            {% elif application.status == 'in_review' or application.status == 'recommended' %}
                 Your application is currently being reviewed by our scholarship committee.
                 No action is needed from you at this time.
-            {% elif application.status == 'approved' %}
-                🎉 Congratulations! Your application has been approved.
+            {% elif application.status == 'accepted' %}
+                🎉 Congratulations! Your application has been accepted.
                 {% if recipient %}
                     You have been awarded <strong>₦{{ recipient.amount_awarded|floatformat:2|intcomma }}</strong>
                     on {{ recipient.awarded_date|date:"d M Y" }}.
@@ -126,6 +131,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <div class="row g-4">
     <!-- ── Left Column: Application Details + Documents ── -->
@@ -148,6 +154,82 @@
                 {% endif %}
             </div>
             <div class="card-body">
+                
+                <!-- Dynamic Status Alerts (Phase 44) -->
+                {% if application.status == 'accepted' %}
+                <div class="alert alert-success shadow-sm rounded-3 d-flex align-items-center mb-4">
+                    <i class="bi bi-check-circle-fill fs-3 me-3"></i>
+                    <div>
+                        <strong>Congratulations!</strong> Your application for the KB Foundation Scholarship has been Accepted. Please monitor your email for next steps.
+                    </div>
+                </div>
+
+                <!-- Phase 45: Bank Details Form -->
+                <div class="card shadow-sm rounded-4 mt-4 mb-4" style="border: 1px solid #198754;">
+                    <div class="card-header bg-success text-white fw-semibold" style="border-radius: calc(1rem - 1px) calc(1rem - 1px) 0 0;">
+                        <i class="bi bi-bank me-2"></i>Award Disbursement Details
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            While you will receive your ceremonial award check at the foundation event, please provide your active bank account details below for the electronic funds transfer.
+                        </p>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_bank">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label small fw-semibold">Bank Name</label>
+                                    <input type="text" name="bank_name" class="form-control" required value="{{ application.bank_name|default:'' }}" placeholder="e.g. Guarantee Trust Bank">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Account Number</label>
+                                    <input type="text" name="account_number" class="form-control" required value="{{ application.account_number|default:'' }}" placeholder="e.g. 0123456789">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Account Name</label>
+                                    <input type="text" name="account_name" class="form-control" required value="{{ application.account_name|default:'' }}" placeholder="As it appears on your account">
+                                </div>
+                                <div class="col-12 mt-3 text-end">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-shield-lock-fill me-1"></i> Save Securely
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% elif application.status == 'rejected' %}
+                <div class="alert alert-secondary shadow-sm rounded-3 d-flex align-items-center mb-4">
+                    <i class="bi bi-info-circle-fill fs-3 me-3"></i>
+                    <div>
+                        Thank you for your application. Unfortunately, you were not selected for this cycle. We encourage you to apply again next year.
+                    </div>
+                </div>
+                {% elif application.status == 'in_review' or application.status == 'recommended' %}
+                <div class="alert alert-info shadow-sm rounded-3 d-flex align-items-center mb-4">
+                    <i class="bi bi-hourglass-split fs-3 me-3"></i>
+                    <div>
+                        Your application is currently under review by the Foundation Board. You will be notified once a final decision is made.
+                    </div>
+                </div>
+                {% else %}
+                    {% if application.is_submitted %}
+                    <div class="alert alert-primary shadow-sm rounded-3 d-flex align-items-center mb-4">
+                        <i class="bi bi-check-circle-fill fs-3 me-3"></i>
+                        <div>
+                            Application Submitted Successfully.
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning shadow-sm rounded-3 d-flex align-items-center mb-4">
+                        <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+                        <div>
+                            Please submit your required documents before the deadline.
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
                 <div class="row g-3">
                     <div class="col-md-6">
                         <small class="text-muted d-block">Academic Session</small>
@@ -198,7 +280,7 @@
         </div>
 
         <!-- ── Documents Section ── -->
-        <div class="card shadow-sm">
+        <div class="card shadow-sm h-100 border-0">
             <div class="card-header d-flex justify-content-between align-items-center"
                  style="background:#f8f9fa;">
                 <span class="fw-semibold">
@@ -208,7 +290,7 @@
                         {{ documents|length }}
                     </span>
                 </span>
-                {% if application.status == 'pending' or application.status == 'under_review' %}
+                {% if not application.is_submitted and application.status in 'pending,under_review' %}
                 <a href="{% url 'scholarships:document_upload' %}"
                    class="btn btn-sm btn-success"
                    id="btn-upload-doc">
@@ -219,7 +301,7 @@
 
             <div class="card-body">
                 <!-- Missing document warnings -->
-                {% if missing_types and application.status == 'pending' %}
+                {% if missing_types and not application.is_submitted %}
                 <div class="mb-3">
                     <small class="text-muted fw-semibold d-block mb-2">
                         <i class="bi bi-exclamation-triangle text-warning me-1"></i>
@@ -275,13 +357,25 @@
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-cloud-upload fs-2 d-block mb-2 text-secondary"></i>
                     <p class="mb-2">No documents uploaded yet.</p>
-                    {% if application.status == 'pending' %}
+                    {% if not application.is_submitted and application.status == 'pending' %}
                     <a href="{% url 'scholarships:document_upload' %}"
                        class="btn btn-sm btn-success"
                        id="btn-upload-first-doc">
                         <i class="bi bi-upload me-1"></i>Upload First Document
                     </a>
                     {% endif %}
+                </div>
+                {% endif %}
+
+                {% if not application.is_submitted %}
+                <hr>
+                <div class="text-end">
+                    <form method="post" action="{% url 'scholarships:application_submit' %}" onsubmit="return confirm('Are you sure you want to finalise your submission? No further documents can be uploaded.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning fw-bold">
+                            <i class="bi bi-lock-fill me-1"></i>Submit Application &amp; Lock
+                        </button>
+                    </form>
                 </div>
                 {% endif %}
             </div>
@@ -309,15 +403,15 @@
                         <div class="small text-muted">{{ documents|length }} file(s) uploaded</div>
                     </li>
                     <li data-step="3"
-                        class="{% if application.status == 'under_review' %}active{% elif application.status == 'approved' or application.status == 'rejected' %}done{% endif %}">
+                        class="{% if application.status in 'in_review,recommended' %}active{% elif application.status in 'accepted,rejected' %}done{% endif %}">
                         <strong>Under Review</strong>
                         <div class="small text-muted">Committee assessment</div>
                     </li>
                     <li data-step="4"
-                        class="{% if application.status == 'approved' %}done{% elif application.status == 'rejected' %}done{% endif %}">
+                        class="{% if application.status in 'accepted,rejected' %}done{% endif %}">
                         <strong>Decision Made</strong>
                         <div class="small text-muted">
-                            {% if application.status == 'approved' %}Approved ✓
+                            {% if application.status == 'accepted' %}Accepted ✓
                             {% elif application.status == 'rejected' %}Rejected
                             {% else %}Awaiting decision
                             {% endif %}
@@ -341,7 +435,7 @@
                     <div class="text-muted small">Amount Awarded</div>
                 </div>
                 <hr/>
-                <table class="table table-borderless small mb-0">
+                <div class="card border-0 shadow-sm mb-4"><div class="card-body p-0 table-responsive"><table class="table table-borderless small mb-0">
                     <tr>
                         <th class="text-muted">Award Date</th>
                         <td>{{ recipient.awarded_date|date:"d M Y" }}</td>
@@ -352,7 +446,7 @@
                         <td>{{ recipient.notes }}</td>
                     </tr>
                     {% endif %}
-                </table>
+                </table></div></div>
             </div>
         </div>
         {% endif %}
@@ -402,15 +496,15 @@
             <ul class="list-group list-group-flush">
                 <li class="list-group-item d-flex gap-2 align-items-center">
                     <i class="bi bi-check-circle text-success"></i>
-                    Admission / Acceptance Letter
+                    Official School Letter
                 </li>
                 <li class="list-group-item d-flex gap-2 align-items-center">
                     <i class="bi bi-check-circle text-success"></i>
-                    Valid School ID Card
+                    Birth Certificate
                 </li>
                 <li class="list-group-item d-flex gap-2 align-items-center">
                     <i class="bi bi-check-circle text-success"></i>
-                    Most Recent Academic Result / Transcript
+                    Passport Photograph
                 </li>
                 <li class="list-group-item d-flex gap-2 align-items-center text-muted">
                     <i class="bi bi-plus-circle text-secondary"></i>
@@ -422,4 +516,6 @@
 </div>
 {% endif %}
 
+
+</div>
 {% endblock %}

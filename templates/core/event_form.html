@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Create Event{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="page-header mb-0"><i class="bi bi-calendar-plus me-2"></i>Create New Event</h2>
+    <p class="text-muted mt-1 mb-0">Log a new event. If Screening or Ceremony, qualified scholars will be notified.</p>
+</div>
+<div class="card shadow-sm rounded-4 border-0">
+    <div class="card-body p-4">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Event Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Event Type</label>
+                    <select name="event_type" class="form-select" required>
+                        {% for value, label in event_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Date</label>
+                    <input type="date" name="date" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Time</label>
+                    <input type="time" name="time" class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Location</label>
+                    <input type="text" name="location" class="form-control" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Description</label>
+                    <textarea name="description" class="form-control" rows="4" required></textarea>
+                </div>
+                <div class="col-12 mt-4 text-end">
+                    <a href="{% url 'core:event_list' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Event</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
