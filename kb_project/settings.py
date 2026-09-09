@@ -214,6 +214,8 @@ EMAIL_HOST_PASSWORD = 'hfktzezuscktrhxs'  # ← Replace with App Password (no sp
 DEFAULT_FROM_EMAIL = 'noreply@kbfoundation.org'
 EMAIL_SUBJECT_PREFIX = '[KB Foundation] '
 
+
+EMAIL_TIMEOUT = 2
 # ---------------------------------------------------------------------------
 # Messages — map Django levels to Bootstrap 5 alert classes
 # ---------------------------------------------------------------------------
