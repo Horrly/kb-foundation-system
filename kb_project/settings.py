@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -92,32 +93,21 @@ WSGI_APPLICATION = 'kb_project.wsgi.application'
 # Database — MySQL (kb_foundation_db)
 # Create this database manually: CREATE DATABASE kb_foundation_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 # ---------------------------------------------------------------------------
-import os
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'kb_foundation_db',
+        'USER': 'root',          # ← replace with your MySQL username
+        'PASSWORD': 'Hollister@18',          # ← replace with your MySQL password
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
 
-# Check if we are running on Render (Render sets 'RENDER' environment variable to 'true')
-if 'RENDER' in os.environ:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    # Your local XAMPP MySQL configuration
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'kb_foundation_db',
-            'USER': 'root',
-            'PASSWORD': 'Hollister@18',
-            'HOST': 'localhost',
-            'PORT': '3306',
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
-    }
 
 # ---------------------------------------------------------------------------
 # Custom User Model  ← CRITICAL: must be set before first migration
@@ -148,8 +138,10 @@ USE_TZ = True
 # ---------------------------------------------------------------------------
 # Static Files
 # ---------------------------------------------------------------------------
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # ---------------------------------------------------------------------------
