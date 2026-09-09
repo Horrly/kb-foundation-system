@@ -93,20 +93,33 @@ WSGI_APPLICATION = 'kb_project.wsgi.application'
 # Database — MySQL (kb_foundation_db)
 # Create this database manually: CREATE DATABASE kb_foundation_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 # ---------------------------------------------------------------------------
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'kb_foundation_db',
-        'USER': 'root',          # ← replace with your MySQL username
-        'PASSWORD': 'Hollister@18',          # ← replace with your MySQL password
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+import os
+
+# Check if we are running on Render using environment variables
+IS_RENDER = os.environ.get('RENDER') or 'onrender.com' in os.environ.get('RENDER_EXTERNAL_URL', '')
+
+if IS_RENDER:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'kb_foundation_db',
+            'USER': 'root',
+            'PASSWORD': 'Hollister@18',
+            'HOST': 'localhost',
+            'PORT': '3306',
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
 
 
 # ---------------------------------------------------------------------------
