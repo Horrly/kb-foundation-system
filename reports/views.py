@@ -80,7 +80,7 @@ def admin_dashboard(request):
     from donors.models import Donation
     from expenditures.models import Expenditure
     from accounts.models import CustomUser
-    
+    from core.models import Event
     if request.method == 'POST' and request.POST.get('action') == 'update_member_role':
         member_id = request.POST.get('member_id')
         new_role = request.POST.get('committee_role')
