@@ -177,14 +177,16 @@ def register_view(request):
             user.backend = 'accounts.backends.EmailOrUniqueIdModelBackend'
             login(request, user, backend='accounts.backends.EmailOrUniqueIdModelBackend')
 
-            # Phase 2: Dispatch welcome email
+            # Phase 2: Dispatch welcome email safely
             login_url = request.build_absolute_uri(reverse('accounts:login'))
-            send_welcome_applicant_email(user, login_url)
+            try:
+                send_welcome_applicant_email(user, login_url)
+            except Exception as e:
+                print(f"Email delivery skipped on cloud host: {e}")
 
             messages.success(
                 request,
                 'Your account has been created. '
-                'A welcome email has been sent to your inbox. '
                 'You can now apply for a scholarship!'
             )
             return redirect('reports:applicant_dashboard')
