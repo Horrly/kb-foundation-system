@@ -629,65 +629,6 @@
     }, 150);
   });
 
-  // ── 2. Mobile navbar collapse — bidirectional, setTimeout-based ──────────
-  //
-  //  Why setTimeout instead of transitionend:
-  //  transitionend is unreliable when the navbar is position:absolute with
-  //  background:transparent (home page). If no visible CSS transition fires,
-  //  the event never dispatches and the menu stays stuck in .collapsing forever.
-  //  A fixed 350ms timeout matches Bootstrap's $transition-collapse duration
-  //  and always cleans up regardless of whether a transition actually ran.
-  //
-  document.addEventListener('DOMContentLoaded', function () {
-    var toggler = document.querySelector('.navbar-toggler');
-    var menu    = document.querySelector('#mainNavbar');
-    if (!toggler || !menu) return;
-
-    // Clear any inline height that a previous interrupted animation may have left
-    menu.style.height = '';
-
-    toggler.addEventListener('click', function (e) {
-      e.preventDefault();
-
-      var isOpening = !menu.classList.contains('show');
-
-      if (isOpening) {
-        // ── Open (slide down) ───────────────────────────────────────────────
-        menu.classList.remove('collapse');
-        menu.classList.add('collapsing');
-        menu.style.height = '0';
-        // Force reflow so the browser registers the 0-height start state
-        void menu.offsetHeight;
-        menu.style.height = menu.scrollHeight + 'px';
-        toggler.setAttribute('aria-expanded', 'true');
-
-        setTimeout(function () {
-          menu.classList.remove('collapsing');
-          menu.classList.add('collapse', 'show');
-          menu.style.height = '';
-        }, 350);
-
-      } else {
-        // ── Close (slide up) ────────────────────────────────────────────────
-        // Lock height at current pixel value so the browser can animate FROM it
-        menu.style.height = menu.scrollHeight + 'px';
-        // Force reflow to register the explicit height before we start shrinking
-        void menu.offsetHeight;
-        menu.classList.remove('collapse', 'show');
-        menu.classList.add('collapsing');
-        // Animate to zero
-        menu.style.height = '0px';
-        toggler.setAttribute('aria-expanded', 'false');
-
-        setTimeout(function () {
-          menu.classList.remove('collapsing');
-          menu.classList.add('collapse');
-          menu.style.height = '';
-        }, 350);
-      }
-    });
-  });
-
 })();
 </script>
 
