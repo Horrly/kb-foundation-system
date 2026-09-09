@@ -62,8 +62,11 @@ def _pending_applications(limit=10):
 @login_required
 def dashboard(request):
     """Redirect bare /reports/dashboard/ to the correct role dashboard."""
+    # Force superusers or users with 'admin' role directly to admin dashboard
+    if request.user.is_superuser or getattr(request.user, 'role', '') == 'admin':
+        return redirect('reports:admin_dashboard')
+
     role_map = {
-        'admin':    'reports:admin_dashboard',
         'member':   'reports:member_dashboard',
         'reviewer': 'reports:reviewer_dashboard',
         'applicant':'reports:applicant_dashboard',
