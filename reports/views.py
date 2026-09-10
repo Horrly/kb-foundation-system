@@ -236,7 +236,8 @@ def donor_dashboard(request):
     Phase 3: Shows full donation history with status badges and submission CTA.
     """
     from donors.models import Donation
-
+    from core.models import Event
+     
     donor_profile = getattr(request.user, 'donor_profile', None)
 
     if donor_profile:
